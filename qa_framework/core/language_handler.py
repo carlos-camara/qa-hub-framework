@@ -15,21 +15,27 @@ class LanguageHandler:
 
     def load_language(self, lang: str):
         """Load translations from a YAML file."""
-        # Try both .yaml and .yml extensions
-        file_path = os.path.join(self.language_dir, f"{lang}.yaml")
-        if not os.path.exists(file_path):
-            file_path = os.path.join(self.language_dir, f"{lang}.yml")
+        # Extract base lang (e.g., 'en' from 'en_US.UTF-8' or 'en_GB')
+        base_lang = lang.split('_')[0].split('.')[0].lower() if lang else "en"
         
-        if os.path.exists(file_path):
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    self.translations = yaml.safe_load(f) or {}
-                self.current_lang = lang
-            except Exception as e:
-                print(f"Error loading translation file {file_path}: {e}")
-                self.translations = {}
-        else:
-            print(f"Warning: Language file for '{lang}' not found in {self.language_dir}")
+        # Order of preference: full lang, then base lang
+        langs_to_try = [lang, base_lang] if lang != base_lang else [base_lang]
+        
+        for l in langs_to_try:
+            file_path = os.path.join(self.language_dir, f"{l}.yaml")
+            if not os.path.exists(file_path):
+                file_path = os.path.join(self.language_dir, f"{l}.yml")
+            
+            if os.path.exists(file_path):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        self.translations = yaml.safe_load(f) or {}
+                    self.current_lang = l
+                    return # Successfully loaded
+                except Exception as e:
+                    print(f"Error loading translation file {file_path}: {e}")
+        
+        print(f"Warning: No valid language file found for '{lang}' or '{base_lang}' in {self.language_dir}")
 
     def resolve(self, key: str) -> str:
         """
