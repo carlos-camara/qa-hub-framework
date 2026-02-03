@@ -9,37 +9,32 @@ class LanguageHandler:
     
     def __init__(self, language_dir: str, default_lang: str = "en"):
         self.language_dir = language_dir
-        self.current_lang = default_lang
+        # Extract base lang (e.g., 'en' from 'en_US.UTF-8')
+        self.target_lang = default_lang.split('_')[0].split('.')[0].lower() if default_lang else "en"
         self.translations: Dict[str, Any] = {}
-        self.load_language(default_lang)
+        self.load_translations()
 
-    def load_language(self, lang: str):
-        """Load translations from a YAML file."""
-        # Extract base lang (e.g., 'en' from 'en_US.UTF-8' or 'en_GB')
-        base_lang = lang.split('_')[0].split('.')[0].lower() if lang else "en"
-        
-        # Order of preference: full lang, then base lang
-        langs_to_try = [lang, base_lang] if lang != base_lang else [base_lang]
-        
-        for l in langs_to_try:
-            file_path = os.path.join(self.language_dir, f"{l}.yaml")
-            if not os.path.exists(file_path):
-                file_path = os.path.join(self.language_dir, f"{l}.yml")
-            
-            if os.path.exists(file_path):
+    def load_translations(self):
+        """Load all translations from the language directory."""
+        if not os.path.exists(self.language_dir):
+            print(f"Warning: Language directory not found: {self.language_dir}")
+            return
+
+        for filename in os.listdir(self.language_dir):
+            if filename.endswith((".yaml", ".yml")):
+                file_path = os.path.join(self.language_dir, filename)
+                view_name = os.path.splitext(filename)[0]
                 try:
                     with open(file_path, 'r', encoding='utf-8') as f:
-                        self.translations = yaml.safe_load(f) or {}
-                    self.current_lang = l
-                    return # Successfully loaded
+                        content = yaml.safe_load(f) or {}
+                        # Each file's content is nested under its view name (filename)
+                        self.translations[view_name] = content
                 except Exception as e:
                     print(f"Error loading translation file {file_path}: {e}")
-        
-        print(f"Warning: No valid language file found for '{lang}' or '{base_lang}' in {self.language_dir}")
 
     def resolve(self, key: str) -> str:
         """
-        Resolve a key (e.g., 'i18n:page.element.text') to its localized value.
+        Resolve a key (e.g., 'i18n:dashboard.header.subtitle') to its localized value.
         If key doesn't start with 'i18n:', return it as is.
         """
         if not key.startswith("i18n:"):
@@ -56,4 +51,12 @@ class LanguageHandler:
                 # Return the key if path is not found
                 return key
         
+        # Leaf resolution: if value is a dict, get target_lang from it
+        if isinstance(value, dict):
+            if self.target_lang in value:
+                return str(value[self.target_lang])
+            # Fallback to 'en' if target_lang is missing
+            elif 'en' in value:
+                return str(value['en'])
+            
         return str(value)
