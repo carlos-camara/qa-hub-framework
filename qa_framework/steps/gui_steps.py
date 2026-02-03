@@ -69,10 +69,21 @@ def get_locator_from_page_object(context, locator_name, page_name):
     # Load the page object YAML from the current working directory
     # This assumes Behave is run from the project root where features/ exists
     page_objects_dir = os.path.join(os.getcwd(), 'features', 'page_objects')
+    
+    # Try both .yml and .yaml extensions
     yaml_path = os.path.join(page_objects_dir, f"{page_file}.yml")
+    if not os.path.exists(yaml_path):
+        yaml_path = os.path.join(page_objects_dir, f"{page_file}.yaml")
+    
+    # Also check in locators subdirectory
+    if not os.path.exists(yaml_path):
+        locators_dir = os.path.join(page_objects_dir, 'locators')
+        yaml_path = os.path.join(locators_dir, f"{page_file}.yml")
+        if not os.path.exists(yaml_path):
+            yaml_path = os.path.join(locators_dir, f"{page_file}.yaml")
     
     if not os.path.exists(yaml_path):
-        raise FileNotFoundError(f"Page object file not found: {yaml_path}")
+        raise FileNotFoundError(f"Page object file not found: {page_file}.yml or {page_file}.yaml in {page_objects_dir} or {page_objects_dir}/locators")
     
     import yaml
     with open(yaml_path, 'r') as f:
