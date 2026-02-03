@@ -33,6 +33,7 @@ graph TD
 ```
 
 For more details on our core components, see [ARCHITECTURE.md](./ARCHITECTURE.md).  
+For the full list of reusable Gherkin steps, see [STEPS.md](./STEPS.md).  
 For information on our CI/CD pipelines, see [.github/workflows/README.md](./.github/workflows/README.md).
 
 ---
