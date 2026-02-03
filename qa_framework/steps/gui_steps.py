@@ -250,8 +250,58 @@ def step_should_see_at_least_elements_in_page_object(context, count, element_nam
 @given('the "{page_name}" page is displayed')
 @step('the "{page_name}" page is displayed')
 def step_set_current_page(context, page_name):
-    """Set the current page context for subsequent steps"""
+    """
+    Set the current page context for subsequent steps and verify critical elements load.
+    Checks for 'wait_load: true' in the page object YAML.
+    """
     context.current_page = page_name
+    
+    # Logic to find and verify elements with wait_load: true
+    # We reuse parts of get_element_from_page_object logic here
+    parts = page_name.split('.')
+    page_file = parts[0]
+    
+    page_objects_dir = os.path.join(os.getcwd(), 'features', 'page_objects')
+    yaml_path = os.path.join(page_objects_dir, f"{page_file}.yml")
+    if not os.path.exists(yaml_path):
+        yaml_path = os.path.join(page_objects_dir, f"{page_file}.yaml")
+    if not os.path.exists(yaml_path):
+        locators_dir = os.path.join(page_objects_dir, 'locators')
+        yaml_path = os.path.join(locators_dir, f"{page_file}.yml")
+        if not os.path.exists(yaml_path):
+            yaml_path = os.path.join(locators_dir, f"{page_file}.yaml")
+            
+    if not os.path.exists(yaml_path):
+        return # Fallback: if YAML not found, just set context and proceed
+        
+    import yaml
+    with open(yaml_path, 'r') as f:
+        page_data = yaml.safe_load(f)
+        
+    if page_file in page_data:
+        page_section = page_data[page_file]
+    else:
+        page_section = page_data.get('locators', page_data)
+        
+    for part in parts[1:]:
+        if isinstance(page_section, dict) and part in page_section:
+            page_section = page_section[part]
+        else:
+            page_section = {} # Path not found
+            break
+            
+    # Verify elements with wait_load: true
+    if isinstance(page_section, dict):
+        for element_name, config in page_section.items():
+            if isinstance(config, dict) and config.get('wait_load') is True:
+                try:
+                    element = get_element_from_page_object(context, element_name, page_name)
+                    element.wait_until_visible(timeout=5)
+                except Exception as e:
+                    raise AssertionError(
+                        f"Page Load Failed: Critical element '{element_name}' with wait_load: true "
+                        f"was not found or not visible on '{page_name}' page. Error: {str(e)}"
+                    )
 
 @when('I click on the "{element_name}"')
 def step_click_current_page_object(context, element_name):
