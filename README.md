@@ -95,7 +95,3 @@ The framework uses environment variables and standard Python configurations. The
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-<p align="center">
-  Developed with ❤️ for the QA Engineering community.
-</p>
