@@ -6,11 +6,29 @@ import os
 import time
 from ..core.language_handler import LanguageHandler
 
+def resolve_tokens(context, text):
+    """
+    Resolve tokens in the text.
+    Order: Variables ([UUID], [NOW], etc) -> I18n ([LANG:key])
+    """
+    if not isinstance(text, str):
+        return text
+        
+    resolved = text
+    
+    # 1. Resolve Variables
+    if hasattr(context, 'variables'):
+        resolved = context.variables.resolve(resolved)
+    
+    # 2. Resolve I18n (if it's still a string and has the tag)
+    if isinstance(resolved, str) and hasattr(context, 'i18n'):
+        resolved = context.i18n.resolve(resolved)
+        
+    return resolved
+
 def resolve_i18n(context, text):
-    """Resolve i18n key if present in context, otherwise return text."""
-    if hasattr(context, 'i18n'):
-        return context.i18n.resolve(text)
-    return text
+    """Legacy wrapper for resolve_tokens"""
+    return resolve_tokens(context, text)
 
 @given('I navigate to "{url}"')
 def step_navigate_to_url(context, url):
