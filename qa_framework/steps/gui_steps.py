@@ -185,3 +185,20 @@ def step_should_see_at_least_elements_by_class(context, count, class_name):
         EC.presence_of_all_elements_located((By.CSS_SELECTOR, css_selector))
     )
     assert len(elements) >= count, f"Expected at least {count} elements with class '{class_name}', found {len(elements)}"
+
+@then('I should see at least {count:d} elements with selector "{element_name}" in "{page_name}"')
+def step_should_see_at_least_elements_in_page_object(context, count, element_name, page_name):
+    """Verify a minimum number of elements exist for a given page object locator"""
+    element = get_element_from_page_object(context, element_name, page_name)
+    
+    # We use the underlying locator from the typed element
+    elements = WebDriverWait(context.driver, 10).until(
+        EC.presence_of_all_elements_located(element.locator)
+    )
+    assert len(elements) >= count, \
+        f"Expected at least {count} elements for '{element_name}' in '{page_name}', found {len(elements)}"
+
+@when('I click on the "{element_name}" in the sidebar')
+def step_click_sidebar_element(context, element_name):
+    """Shortcut for clicking sidebar elements"""
+    step_click_page_object(context, element_name, "sidebar")
