@@ -242,6 +242,54 @@ def step_should_see_at_least_elements_in_page_object(context, count, element_nam
     assert len(elements) >= count, \
         f"Expected at least {count} elements for '{element_name}' in '{page_name}', found {len(elements)}"
 
+@then('the "{page_name}" page is displayed')
+@given('the "{page_name}" page is displayed')
+@step('the "{page_name}" page is displayed')
+def step_set_current_page(context, page_name):
+    """Set the current page context for subsequent steps"""
+    context.current_page = page_name
+
+@when('I click on the "{element_name}"')
+def step_click_current_page_object(context, element_name):
+    """Context-aware click: uses context.current_page if available"""
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_click_page_object(context, element_name, page_name)
+
+@when('I type "{text}" into the "{element_name}"')
+def step_type_into_current_page_object(context, text, element_name):
+    """Context-aware type: uses context.current_page if available"""
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_type_into_page_object(context, text, element_name, page_name)
+
+@then('the "{element_name}" should contain the text "{text}"')
+def step_current_element_should_contain_text(context, element_name, text):
+    """Context-aware text containment: uses context.current_page if available"""
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_element_should_contain_text(context, element_name, page_name, text)
+
+@then('I should see the "{element_name}"')
+@then('the "{element_name}" should be visible')
+def step_should_see_current_page_object(context, element_name):
+    """Context-aware visibility: uses context.current_page if available"""
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_should_see_page_object(context, element_name, page_name)
+
+@then('I should see at least {count:d} elements with selector "{element_name}"')
+def step_should_see_at_least_elements_in_current_page(context, count, element_name):
+    """Context-aware count: uses context.current_page if available"""
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_should_see_at_least_elements_in_page_object(context, count, element_name, page_name)
+
 @when('I click on the "{element_name}" in the sidebar')
 def step_click_sidebar_element(context, element_name):
     """Shortcut for clicking sidebar elements"""
