@@ -16,3 +16,4 @@ jobs:
         uses: carlos-camara/qa-hub-actions/security-audit@main
         with:
           target-path: 'qa_framework/'
+          bandit-skip: 'B101'  # Skip assert warnings - valid for BDD test framework
