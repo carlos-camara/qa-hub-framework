@@ -13,7 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Link Checker
-        uses: lycheeverse/lychee-action@v1.9.0
-        with:
-          args: --verbose --no-progress "**/*.md"
-          fail: true
+        uses: carlos-camara/qa-hub-actions/link-checker@main

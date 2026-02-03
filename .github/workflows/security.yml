@@ -12,14 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Security Audit
+        uses: carlos-camara/qa-hub-actions/security-audit@main
         with:
-          python-version: '3.11'
-      - name: Install security tools
-        run: |
-          pip install safety bandit
-      - name: Dependency Check (Safety)
-        run: safety check
-      - name: Static Analysis (Bandit)
-        run: bandit -r qa_framework/
+          target-path: 'qa_framework/'
