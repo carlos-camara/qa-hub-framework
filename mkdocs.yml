@@ -5,6 +5,7 @@ site_author: Carlos Camara
 
 extra_javascript:
   - https://unpkg.com/mermaid/dist/mermaid.min.js
+  - javascripts/mermaid-init.js
 
 theme:
   name: material
