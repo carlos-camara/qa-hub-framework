@@ -181,14 +181,18 @@ def step_click_page_object(context, element_name, page_name):
 @when('I type "{text}" into the "{element_name}" in "{page_name}"')
 def step_type_into_page_object(context, text, element_name, page_name):
     element = get_element_from_page_object(context, element_name, page_name)
+    
+    # Resolve tokens (I18n and Variables)
+    resolved_text = resolve_tokens(context, text)
+    
     # Check if element is an Input, otherwise fall back to Selenium send_keys
     if hasattr(element, 'clear_and_type'):
-        element.clear_and_type(text)
+        element.clear_and_type(resolved_text)
     else:
         # Fallback for non-Input elements
         selenium_element = element._find_element()
         selenium_element.clear()
-        selenium_element.send_keys(text)
+        selenium_element.send_keys(resolved_text)
 
 @then('I should see the "{element_name}" in "{page_name}"')
 @then('the "{element_name}" in "{page_name}" should be visible')
