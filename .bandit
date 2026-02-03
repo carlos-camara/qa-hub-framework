@@ -1,0 +1,7 @@
+[bandit]
+# Exclude B101 (assert_used) for testing framework step definitions
+# Assert statements are expected and required in BDD/Behave step definitions
+skips: B101
+
+# Optional: Specify paths to exclude if needed
+# exclude: /test/,/tests/
