@@ -1,66 +1,59 @@
 # 📔 Gherkin Steps Library
 
-This library documents the **reusable common steps** provided by the framework. These steps are designed to be imported into any project to accelerate test development.
+This library documents the **reusable common steps** provided by the framework. These steps are organized by component to help you build comprehensive test suites.
 
 ---
 
-## 📂 Navigation & URL Verification
+## 🌐 API Testing (`api_steps.py`)
 
-### `the page URL should contain "{url_fragment}"`
-Verifies that the current browser URL contains the expected string.
+Standardized steps for REST API validation, supporting dynamic variables and complex JSON assertions.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `url_fragment` | `string` | The partial text expected in the URL. |
+### Navigation & Setup
+- `Given the API base URL is "{base_url}"`: Sets the target host.
+- `When I set request headers`: Takes a table of key-value pairs.
 
-**Example:**
-```gherkin
-Then the page URL should contain "dashboard"
-```
+### Requests
+- `When I send a "{method}" request to "{path}"`: Simple HTTP call.
+- `When I send a "{method}" request to "{path}" with query parameters`: Uses a Behave table.
+- `When I send a "{method}" request to "{path}" with JSON body`: Uses a docstring for the payload.
+- `When I send a "POST" request to "{path}" with form data`: For `x-www-form-urlencoded`.
 
----
-
-## 🔍 Validation & Assertions
-
-### `I should see the text "{text}"`
-Checks if the specified text is present anywhere in the current page source.
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `text` | `string` | The text string to look for. |
-
-**Example:**
-```gherkin
-Then I should see the text "Welcome back, Carlos"
-```
+### Assertions & Variables
+- `Then the response status code should be {status_code:d}`: Standard status check.
+- `Then the response JSON path "{path}" should be "{expected}"`: Dot-notation JSON validation.
+- `Then the response time should be less than {ms:d} ms`: Performance guardrail.
+- `Then I store the response JSON path "{path}" as "{var_name}"`: Capture values for reuse.
 
 ---
 
-## 🛠️ Utilities & Debugging
+## �️ GUI Testing (`gui_steps.py`)
 
-### `I wait for {seconds:d} seconds`
-Executes an explicit sleep. Use this sparingly; prefer Page Object waits for better performance.
+Steps for web UI interaction and validation, including robust waits and visual captures.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `seconds` | `int` | Number of seconds to pause execution. |
+### Interaction
+- `Given I navigate to "{url}"`: Browser navigation.
+- `When I click on the element with text "{text}"`: Generic text-based interaction.
+- `When I click on the button with text "{button_text}"`: Specifically targets button elements.
+- `When I scroll to the bottom of the page`: Dynamic page navigation.
 
-**Example:**
-```gherkin
-When I wait for 2 seconds
-```
+### Validation
+- `Then the page title should be "{expected_title}"`: Title verification.
+- `Then I should see the text "{text}"`: Global page source check.
+- `Then I should see an element with class "{class_name}"`: CSS-based visibility check.
 
-### `I take a screenshot named "{screenshot_name}"`
-Captures the current browser state and saves it. If using an HTML report, it will automatically embed the image.
+### Visual Captures
+- `Then I take a screenshot named "{screenshot_name}"`: Standard screenshot with HTML embedding support.
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `screenshot_name` | `string` | The filename (without extension) for the capture. |
+---
 
-**Example:**
-```gherkin
-Then I take a screenshot named "after_login_success"
-```
+## 📄 PDF Testing (`pdf_steps.py`)
+
+Specialized steps for verifying document downloads and content.
+
+- `When I wait for {seconds:d} seconds for the download to complete`: Timing control.
+- `Then the downloaded file "{filename}" should exist`: Integrity check.
+- `Then the PDF "{filename}" should have at least {page_count:d} pages`: Structure check.
+- `Then I verify the content of the first {count:d} pages of "{filename}" contains "{keyword}"`: Text-in-PDF validation.
 
 ---
 
@@ -69,11 +62,15 @@ Then I take a screenshot named "after_login_success"
 To leverage these steps in your project, ensure your `environment.py` or steps directory imports them:
 
 ```python
-# In your features/steps/common_steps.py
-from qa_framework.steps.common_steps import *
-```
+# API Steps
+from qa_framework.steps.api_steps import *
 
-Once imported, you can use them directly in any `.feature` file without further implementation.
+# GUI Steps
+from qa_framework.steps.gui_steps import *
+
+# PDF Steps
+from qa_framework.steps.pdf_steps import *
+```
 
 ---
 
