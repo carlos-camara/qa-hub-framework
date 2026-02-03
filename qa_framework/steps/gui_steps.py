@@ -4,6 +4,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import os
 import time
+from ..core.language_handler import LanguageHandler
+
+def resolve_i18n(context, text):
+    """Resolve i18n key if present in context, otherwise return text."""
+    if hasattr(context, 'i18n'):
+        return context.i18n.resolve(text)
+    return text
 
 @given('I navigate to "{url}"')
 def step_navigate_to_url(context, url):
@@ -11,30 +18,36 @@ def step_navigate_to_url(context, url):
 
 @then('the page title should be "{expected_title}"')
 def step_verify_page_title(context, expected_title):
-    WebDriverWait(context.driver, 10).until(EC.title_is(expected_title))
-    assert context.driver.title == expected_title
+    resolved_title = resolve_i18n(context, expected_title)
+    WebDriverWait(context.driver, 10).until(EC.title_is(resolved_title))
+    assert context.driver.title == resolved_title
 
 @when('I click on the element with text "{text}"')
 def step_click_element_by_text(context, text):
+    resolved_text = resolve_i18n(context, text)
     # Using a generic XPath for text matching
-    locator = (By.XPATH, f"//*[contains(text(), '{text}')]")
+    locator = (By.XPATH, f"//*[contains(text(), '{resolved_text}')]")
     element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable(locator))
     element.click()
 
 @when('I click on the button with text "{button_text}"')
 def step_click_button_by_text(context, button_text):
+    resolved_text = resolve_i18n(context, button_text)
     # Use XPath with translate for case-insensitive matching
-    xpath = f"//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{button_text.lower()}')]"
+    xpath = f"//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{resolved_text.lower()}')]"
     element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
     element.click()
 
 @then('I should see the text "{text}"')
 def step_verify_text_present(context, text):
+    # Resolve i18n if applicable
+    resolved_text = resolve_i18n(context, text)
+    
     # Check body text for case-insensitive match with normalized whitespace
     body_text = context.driver.find_element(By.TAG_NAME, "body").text
     normalized_body = " ".join(body_text.lower().split())
-    normalized_expected = " ".join(text.lower().split())
-    assert normalized_expected in normalized_body, f"Text '{text}' not found (case-insensitive normalized search in body). Found sample: '{normalized_body[:100]}...'"
+    normalized_expected = " ".join(resolved_text.lower().split())
+    assert normalized_expected in normalized_body, f"Text '{resolved_text}' not found (case-insensitive normalized search in body). Found sample: '{normalized_body[:100]}...'"
 
 @then('I should see an element with class "{class_name}"')
 def step_verify_element_by_class(context, class_name):
@@ -169,6 +182,9 @@ def step_should_see_page_object(context, element_name, page_name):
 @then('the "{element_name}" in "{page_name}" should contain the text "{text}"')
 def step_element_should_contain_text(context, element_name, page_name, text):
     """Verify that a specific element contains expected text"""
+    # Resolve i18n if applicable
+    resolved_text = resolve_i18n(context, text)
+    
     element = get_element_from_page_object(context, element_name, page_name)
     
     # Get text using appropriate method based on element type
@@ -179,10 +195,10 @@ def step_element_should_contain_text(context, element_name, page_name, text):
     
     # Normalize whitespace for multi-line comparison (e.g., <br /> tags)
     normalized_element = " ".join(element_text.lower().split())
-    normalized_expected = " ".join(text.lower().split())
+    normalized_expected = " ".join(resolved_text.lower().split())
     
     assert normalized_expected in normalized_element, \
-        f"Element '{element_name}' in '{page_name}' does not contain text '{text}' (case-insensitive normalized). Found: '{element_text}'"
+        f"Element '{element_name}' in '{page_name}' does not contain text '{resolved_text}' (case-insensitive normalized). Found: '{element_text}'"
 
 @then('I should see at least {count:d} elements with class "{class_name}"')
 def step_should_see_at_least_elements_by_class(context, count, class_name):
