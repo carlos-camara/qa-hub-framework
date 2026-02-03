@@ -3,6 +3,9 @@ site_url: https://carlos-camara.github.io/qa-hub-framework/
 site_description: Documentation for the QA Hub Framework
 site_author: Carlos Camara
 
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js
+
 theme:
   name: material
   palette:
