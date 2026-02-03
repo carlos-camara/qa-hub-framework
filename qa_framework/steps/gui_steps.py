@@ -139,7 +139,12 @@ def step_should_see_page_object(context, locator_name, page_name):
 
 @then('I should see at least {count:d} elements with class "{class_name}"')
 def step_should_see_at_least_elements_by_class(context, count, class_name):
+    # Use CSS selector to handle Tailwind classes with special characters like "bg-slate-950/40"
+    # Escape special characters for CSS selector
+    escaped_class = class_name.replace('/', '\\/')
+    css_selector = f".{escaped_class}"
+    
     elements = WebDriverWait(context.driver, 10).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, class_name))
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, css_selector))
     )
     assert len(elements) >= count, f"Expected at least {count} elements with class '{class_name}', found {len(elements)}"
