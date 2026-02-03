@@ -57,11 +57,15 @@ def step_take_screenshot(context, screenshot_name):
 
 # ==================== Page Object-based Steps ====================
 
-def get_locator_from_page_object(context, locator_name, page_name):
+def get_element_from_page_object(context, element_name, page_name):
     """
-    Helper to retrieve locator from YAML page objects.
+    Helper to retrieve a typed element from YAML page objects.
     Supports nested notation like "dashboard.recent_runs".
+    
+    Returns a typed element instance (Button, Input, Text, etc.) instead of a raw locator.
     """
+    from qa_framework.core.element_factory import ElementFactory
+    
     # Split page name by dots for nested access
     parts = page_name.split('.')
     page_file = parts[0]
@@ -92,59 +96,77 @@ def get_locator_from_page_object(context, locator_name, page_name):
     # Navigate nested structure if needed
     # First, check if the page name itself is a root key in the YAML
     if page_file in page_data:
-        locators = page_data[page_file]
+        page_section = page_data[page_file]
     else:
-        locators = page_data.get('locators', page_data)
+        page_section = page_data.get('locators', page_data)
     
     # Handle additional nesting like "dashboard.recent_runs"
     for part in parts[1:]:
-        if isinstance(locators, dict) and part in locators:
-            locators = locators[part]
+        if isinstance(page_section, dict) and part in page_section:
+            page_section = page_section[part]
         else:
             raise KeyError(f"Nested path '{part}' not found in '{page_name}'")
     
-    if locator_name not in locators:
-        raise KeyError(f"Locator '{locator_name}' not found in '{page_name}'. Available locators: {list(locators.keys())}")
+    # Search for the element in type-based sections
+    element_types = ['buttons', 'inputs', 'texts', 'webelements']
+    found_type = None
+    locator_data = None
     
-    locator_data = locators[locator_name]
-    by_type = locator_data['by']
-    value = locator_data['value']
+    for element_type in element_types:
+        if element_type in page_section:
+            if element_name in page_section[element_type]:
+                found_type = element_type.rstrip('s')  # buttons -> button, texts -> text
+                locator_data = page_section[element_type][element_name]
+                break
     
-    # Convert string 'by' to Selenium By constant
-    by_mapping = {
-        'id': By.ID,
-        'name': By.NAME,
-        'xpath': By.XPATH,
-        'css': By.CSS_SELECTOR,
-        'class': By.CLASS_NAME,
-        'tag': By.TAG_NAME,
-        'link_text': By.LINK_TEXT,
-        'partial_link_text': By.PARTIAL_LINK_TEXT
-    }
-    return (by_mapping[by_type], value)
+    # Fallback: check if element is directly in page_section (old format support)
+    if locator_data is None and element_name in page_section:
+        locator_data = page_section[element_name]
+        found_type = 'webelement'  # Default to generic element
+    
+    if locator_data is None:
+        raise KeyError(
+            f"Element '{element_name}' not found in '{page_name}'. "
+            f"Checked sections: {element_types}. "
+            f"Available elements: {list(page_section.keys())}"
+        )
+    
+    # Create and return typed element using ElementFactory
+    element = ElementFactory.create(
+        driver=context.driver,
+        element_type=found_type,
+        locator_data=locator_data,
+        element_name=element_name
+    )
+    
+    return element
 
 @given('I navigate to the dashboard at "{url}"')
 def step_navigate_to_dashboard(context, url):
     context.driver.get(url)
 
-@when('I click on the "{locator_name}" in "{page_name}"')
-def step_click_page_object(context, locator_name, page_name):
-    locator = get_locator_from_page_object(context, locator_name, page_name)
-    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable(locator))
+@when('I click on the "{element_name}" in "{page_name}"')
+def step_click_page_object(context, element_name, page_name):
+    element = get_element_from_page_object(context, element_name, page_name)
     element.click()
 
-@when('I type "{text}" into the "{locator_name}" in "{page_name}"')
-def step_type_into_page_object(context, text, locator_name, page_name):
-    locator = get_locator_from_page_object(context, locator_name, page_name)
-    element = WebDriverWait(context.driver, 10).until(EC.visibility_of_element_located(locator))
-    element.clear()
-    element.send_keys(text)
+@when('I type "{text}" into the "{element_name}" in "{page_name}"')
+def step_type_into_page_object(context, text, element_name, page_name):
+    element = get_element_from_page_object(context, element_name, page_name)
+    # Check if element is an Input, otherwise fall back to Selenium send_keys
+    if hasattr(element, 'clear_and_type'):
+        element.clear_and_type(text)
+    else:
+        # Fallback for non-Input elements
+        selenium_element = element._find_element()
+        selenium_element.clear()
+        selenium_element.send_keys(text)
 
-@then('I should see the "{locator_name}" in "{page_name}"')
-def step_should_see_page_object(context, locator_name, page_name):
-    locator = get_locator_from_page_object(context, locator_name, page_name)
-    element = WebDriverWait(context.driver, 10).until(EC.visibility_of_element_located(locator))
-    assert element.is_displayed()
+@then('I should see the "{element_name}" in "{page_name}"')
+def step_should_see_page_object(context, element_name, page_name):
+    element = get_element_from_page_object(context, element_name, page_name)
+    element.wait_until_visible()
+    assert element.is_displayed(), f"Element '{element_name}' in '{page_name}' is not visible"
 
 @then('I should see at least {count:d} elements with class "{class_name}"')
 def step_should_see_at_least_elements_by_class(context, count, class_name):
