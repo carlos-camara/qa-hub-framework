@@ -20,13 +20,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Deploy Documentation to GitHub Pages
-        id: deployment
         uses: carlos-camara/qa-hub-actions/deploy-gh-pages@main
         with:
           requirements: 'mkdocs-material'
