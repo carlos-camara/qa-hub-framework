@@ -1,0 +1,9 @@
+"Type: Core":
+  - qa_framework/**/*
+"Type: Documentation":
+  - docs/**/*
+  - "*.md"
+"Type: CI/CD":
+  - .github/workflows/**/*
+"Type: Tests":
+  - tests/**/*
