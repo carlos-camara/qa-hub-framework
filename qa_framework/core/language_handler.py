@@ -34,14 +34,19 @@ class LanguageHandler:
 
     def resolve(self, key: str) -> str:
         """
-        Resolve a key (e.g., 'i18n:dashboard.header.subtitle') to its localized value.
-        If key doesn't start with 'i18n:', return it as is.
+        Resolve a key like '[LANG:dashboard.header.subtitle]' to its localized value.
+        Supports both '[LANG:key.path]' and legacy 'i18n:key.path'.
         """
-        if not key.startswith("i18n:"):
+        if key.startswith("[LANG:") and key.endswith("]"):
+            # Strip '[LANG:' and ']'
+            path_str = key[6:-1]
+        elif key.startswith("i18n:"):
+            # Strip 'i18n:'
+            path_str = key[5:]
+        else:
             return key
             
-        # Strip prefix
-        path = key[5:].split('.')
+        path = path_str.split('.')
         
         value = self.translations
         for segment in path:
