@@ -6,27 +6,42 @@ This library documents the **reusable common steps** provided by the framework. 
 
 ## 🌐 API Testing (`api_steps.py`)
 
-Standardized steps for REST API validation, supporting dynamic variables and complex JSON assertions.
+Standardized steps for REST API validation, supporting dynamic variables, complex JSON assertions, and file uploads.
 
 ### Navigation & Setup
 - `Given the API base URL is "{base_url}"`: Sets the target host.
 - `When I set request headers`: Takes a table of key-value pairs.
 
-### Requests
+### Requests & Uploads
 - `When I send a "{method}" request to "{path}"`: Simple HTTP call.
 - `When I send a "{method}" request to "{path}" with query parameters`: Uses a Behave table.
 - `When I send a "{method}" request to "{path}" with JSON body`: Uses a docstring for the payload.
 - `When I send a "POST" request to "{path}" with form data`: For `x-www-form-urlencoded`.
+- `When I upload the file "{filename}" to "{endpoint}"`: Generic multipart/form-data upload.
 
 ### Assertions & Variables
 - `Then the response status code should be {status_code:d}`: Standard status check.
 - `Then the response JSON path "{path}" should be "{expected}"`: Dot-notation JSON validation.
+- `Then the response JSON path "{path}" should be {expected:d}`: Integer validation.
+- `Then the response JSON path "{path}" should be a "{py_type}"`: Type check (str, int, float, bool, dict, list).
+- `Then the response JSON path "{path}" should contain "{substring}"`: Substring matching.
+- `Then the response JSON path "{path}" should be >= {value:d}`: Numeric comparison.
+- `Then the response JSON path "{path}" should match regex "{pattern}"`: Regular expression matching.
+- `Then the response JSON path "{path}" should be null`: Explicit null check.
+- `Then the response header "{header_name}" should be "{expected}"`: Case-insensitive header check.
+- `Then the response body should be empty`: Verifies no body is returned.
 - `Then the response time should be less than {ms:d} ms`: Performance guardrail.
 - `Then I store the response JSON path "{path}" as "{var_name}"`: Capture values for reuse.
+- `Then the stored variables "{var_a}" and "{var_b}" should be different`: Uniqueness check.
+- `Then the response JSON path "{path}" should equal stored variable "{var_name}"`: Cross-request verification.
+
+### Debugging
+- `Then I print the response JSON`: Pretty-prints the response body.
+- `Then I print the request headers`: Displays the sent headers for triage.
 
 ---
 
-## �️ GUI Testing (`gui_steps.py`)
+## 🖱️ GUI Testing (`gui_steps.py`)
 
 Steps for web UI interaction and validation, including robust waits and visual captures.
 
@@ -70,6 +85,9 @@ from qa_framework.steps.gui_steps import *
 
 # PDF Steps
 from qa_framework.steps.pdf_steps import *
+
+# Common/Utility Steps (like 'I wait for N seconds')
+from qa_framework.steps.common_steps import *
 ```
 
 ---
