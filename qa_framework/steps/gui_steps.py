@@ -54,3 +54,81 @@ def step_take_screenshot(context, screenshot_name):
         with open(filepath, 'rb') as img:
             data = base64.b64encode(img.read()).decode('utf-8')
         context.embed('image/png', data, caption=screenshot_name)
+
+# ==================== Page Object-based Steps ====================
+
+def get_locator_from_page_object(context, locator_name, page_name):
+    """
+    Helper to retrieve locator from YAML page objects.
+    Supports nested notation like "dashboard.recent_runs".
+    """
+    from qa_framework.core.base_page import BasePage
+    # Split page name by dots for nested access
+    parts = page_name.split('.')
+    page_file = parts[0]
+    
+    # Load the page object YAML
+    page_objects_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'features', 'page_objects')
+    yaml_path = os.path.join(page_objects_dir, f"{page_file}.yml")
+    
+    if not os.path.exists(yaml_path):
+        raise FileNotFoundError(f"Page object file not found: {yaml_path}")
+    
+    import yaml
+    with open(yaml_path, 'r') as f:
+        page_data = yaml.safe_load(f)
+    
+    # Navigate nested structure if needed
+    locators = page_data.get('locators', {})
+    for part in parts[1:]:
+        locators = locators.get(part, {})
+    
+    if locator_name not in locators:
+        raise KeyError(f"Locator '{locator_name}' not found in '{page_name}'")
+    
+    locator_data = locators[locator_name]
+    by_type = locator_data['by']
+    value = locator_data['value']
+    
+    # Convert string 'by' to Selenium By constant
+    by_mapping = {
+        'id': By.ID,
+        'name': By.NAME,
+        'xpath': By.XPATH,
+        'css': By.CSS_SELECTOR,
+        'class': By.CLASS_NAME,
+        'tag': By.TAG_NAME,
+        'link_text': By.LINK_TEXT,
+        'partial_link_text': By.PARTIAL_LINK_TEXT
+    }
+    return (by_mapping[by_type], value)
+
+@given('I navigate to the dashboard at "{url}"')
+def step_navigate_to_dashboard(context, url):
+    context.driver.get(url)
+
+@when('I click on the "{locator_name}" in "{page_name}"')
+def step_click_page_object(context, locator_name, page_name):
+    locator = get_locator_from_page_object(context, locator_name, page_name)
+    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable(locator))
+    element.click()
+
+@when('I type "{text}" into the "{locator_name}" in "{page_name}"')
+def step_type_into_page_object(context, text, locator_name, page_name):
+    locator = get_locator_from_page_object(context, locator_name, page_name)
+    element = WebDriverWait(context.driver, 10).until(EC.visibility_of_element_located(locator))
+    element.clear()
+    element.send_keys(text)
+
+@then('I should see the "{locator_name}" in "{page_name}"')
+def step_should_see_page_object(context, locator_name, page_name):
+    locator = get_locator_from_page_object(context, locator_name, page_name)
+    element = WebDriverWait(context.driver, 10).until(EC.visibility_of_element_located(locator))
+    assert element.is_displayed()
+
+@then('I should see at least {count:d} elements with class "{class_name}"')
+def step_should_see_at_least_elements_by_class(context, count, class_name):
+    elements = WebDriverWait(context.driver, 10).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, class_name))
+    )
+    assert len(elements) >= count, f"Expected at least {count} elements with class '{class_name}', found {len(elements)}"
