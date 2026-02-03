@@ -1,7 +1,6 @@
 name: PR Labeler
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
     branches: [ main ]
 
 permissions:
@@ -12,8 +11,7 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Auto-label PR
-        uses: carlos-camara/qa-hub-actions/pr-labeler@main
+      - uses: actions/labeler@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          sync-labels: true

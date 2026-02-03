@@ -23,13 +23,18 @@ def step_click_element_by_text(context, text):
 
 @when('I click on the button with text "{button_text}"')
 def step_click_button_by_text(context, button_text):
-    locator = (By.XPATH, f"//button[contains(text(), '{button_text}')]")
-    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable(locator))
+    # Use XPath with translate for case-insensitive matching
+    xpath = f"//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{button_text.lower()}')]"
+    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
     element.click()
 
 @then('I should see the text "{text}"')
 def step_verify_text_present(context, text):
-    assert text in context.driver.page_source, f"Text '{text}' not found."
+    # Check body text for case-insensitive match with normalized whitespace
+    body_text = context.driver.find_element(By.TAG_NAME, "body").text
+    normalized_body = " ".join(body_text.lower().split())
+    normalized_expected = " ".join(text.lower().split())
+    assert normalized_expected in normalized_body, f"Text '{text}' not found (case-insensitive normalized search in body). Found sample: '{normalized_body[:100]}...'"
 
 @then('I should see an element with class "{class_name}"')
 def step_verify_element_by_class(context, class_name):
@@ -155,6 +160,7 @@ def step_type_into_page_object(context, text, element_name, page_name):
         selenium_element.send_keys(text)
 
 @then('I should see the "{element_name}" in "{page_name}"')
+@then('the "{element_name}" in "{page_name}" should be visible')
 def step_should_see_page_object(context, element_name, page_name):
     element = get_element_from_page_object(context, element_name, page_name)
     element.wait_until_visible()
@@ -171,8 +177,12 @@ def step_element_should_contain_text(context, element_name, page_name, text):
     else:
         element_text = element._find_element().text
     
-    assert text in element_text, \
-        f"Element '{element_name}' in '{page_name}' does not contain text '{text}'. Found: '{element_text}'"
+    # Normalize whitespace for multi-line comparison (e.g., <br /> tags)
+    normalized_element = " ".join(element_text.lower().split())
+    normalized_expected = " ".join(text.lower().split())
+    
+    assert normalized_expected in normalized_element, \
+        f"Element '{element_name}' in '{page_name}' does not contain text '{text}' (case-insensitive normalized). Found: '{element_text}'"
 
 @then('I should see at least {count:d} elements with class "{class_name}"')
 def step_should_see_at_least_elements_by_class(context, count, class_name):

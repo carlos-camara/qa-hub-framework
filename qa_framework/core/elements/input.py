@@ -44,6 +44,10 @@ class Input(WebElement):
         """Get the current value of the input field."""
         return self.get_attribute('value')
     
+    def get_text(self) -> str:
+        """Alias for get_value to support generic text verification steps."""
+        return self.get_value()
+    
     def append(self, text: str, timeout: int = 10):
         """
         Append text to existing value without clearing.

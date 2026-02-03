@@ -69,6 +69,24 @@ class WebElement:
         element = self._find_element()
         return element.get_attribute(attribute)
     
+    def click(self, timeout: int = 10):
+        """Click the element."""
+        self.wait_until_clickable(timeout)
+        element = self._find_element(timeout)
+        element.click()
+    
+    def send_keys(self, keys: str, timeout: int = 10):
+        """Send keys to the element."""
+        self.wait_until_visible(timeout)
+        element = self._find_element(timeout)
+        element.send_keys(keys)
+    
+    def get_text(self, timeout: int = 10) -> str:
+        """Get the text content of the element."""
+        self.wait_until_visible(timeout)
+        element = self._find_element(timeout)
+        return element.text
+    
     def wait_until_visible(self, timeout: int = 10):
         """Wait until element is visible."""
         try:

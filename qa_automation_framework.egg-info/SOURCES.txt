@@ -7,3 +7,6 @@ qa_automation_framework.egg-info/dependency_links.txt
 qa_automation_framework.egg-info/requires.txt
 qa_automation_framework.egg-info/top_level.txt
 qa_framework/__init__.py
+tests/test_api_steps.py
+tests/test_gui_steps.py
+tests/test_utils_http.py

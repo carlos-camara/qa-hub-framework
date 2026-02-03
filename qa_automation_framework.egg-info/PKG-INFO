@@ -3,9 +3,11 @@ Name: qa-automation-framework
 Version: 0.1.0
 Summary: Reusable QA Automation Framework for UI and API testing
 License-File: LICENSE
-Requires-Dist: selenium
-Requires-Dist: behave
-Requires-Dist: requests
+Requires-Dist: behave==1.2.6
+Requires-Dist: selenium==4.19.0
+Requires-Dist: requests==2.32.3
+Requires-Dist: PyYAML==6.0.1
+Requires-Dist: pypdf==6.6.2
 Dynamic: license-file
 Dynamic: requires-dist
 Dynamic: summary
