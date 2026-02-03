@@ -2,6 +2,7 @@ from behave import given, when, then
 import requests
 import re
 import json
+import os
 from qa_framework.utils.http import (
     full_url,
     loads_json_or_fail,
@@ -104,6 +105,23 @@ def step_post_with_form_data(context, path: str):
         context.response_json = None
     context.last_request = {"method": "POST", "url": url, "headers": dict(context.default_headers), "form": form}
 
+@when('I upload the file "{filename}" to "{endpoint}"')
+def step_upload_file(context, filename, endpoint):
+    """Generic multipart upload."""
+    possible_paths = [filename, os.path.join("features", "resources", filename),
+                      os.path.join("features", "data", filename), os.path.join("test_data", filename)]
+    file_path = next((p for p in possible_paths if os.path.exists(p)), None)
+    if not file_path: raise FileNotFoundError(f"File '{filename}' not found.")
+    url = full_url(context.base_url, endpoint)
+    with open(file_path, 'rb') as f:
+        files = {'files': (os.path.basename(file_path), f)}
+        headers = getattr(context, "default_headers", {}).copy()
+        if 'Content-Type' in headers: del headers['Content-Type']
+        resp = requests.post(url, files=files, headers=headers, timeout=30)
+        context.response = resp
+        try: context.response_json = resp.json()
+        except: context.response_json = None
+
 @then("the response status code should be {status_code:d}")
 def step_assert_status(context, status_code: int):
     assert context.response is not None, "No response found."
@@ -123,6 +141,50 @@ def step_assert_json_path_int(context, path: str, expected: int):
     actual = get_json_path(context.response_json, path)
     assert actual == expected, f"JSON mismatch at '{path}'. Expected: {expected}, Actual: {actual}"
 
+@then('the response JSON path "{path}" should be a "{py_type}"')
+def step_assert_json_type(context, path: str, py_type: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    val = get_json_path(context.response_json, path)
+    mapping = {"str": str, "int": int, "float": float, "bool": bool, "dict": dict, "list": list}
+    if py_type not in mapping: raise AssertionError(f"Unsupported type '{py_type}'.")
+    assert isinstance(val, mapping[py_type]), f"Expected {py_type}, got {type(val)}"
+
+@then('the response JSON path "{path}" should contain "{substring}"')
+def step_assert_json_path_contains(context, path: str, substring: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    actual = get_json_path(context.response_json, path)
+    assert substring in str(actual), f"Expected '{substring}' to be in '{actual}'"
+
+@then('the response JSON path "{path}" should be >= {value:d}')
+def step_assert_json_path_ge(context, path, value):
+    assert context.response_json is not None, "Response JSON is empty."
+    actual = get_json_path(context.response_json, path)
+    assert actual >= value, f"Expected >= {value}, got {actual}"
+
+@then('the response JSON path "{path}" should be null')
+def step_json_path_should_be_null(context, path: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    val = get_json_path(context.response_json, path)
+    assert val is None, f"Expected null, got {val}"
+
+@then('the response header "{header_name}" should be "{expected}"')
+def step_assert_response_header(context, header_name: str, expected: str):
+    assert context.response is not None, "No response found."
+    headers = context.response_json.get("headers", {}) if context.response_json and isinstance(context.response_json, dict) else context.response.headers
+    actual = get_header_case_insensitive(headers, header_name)
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+@then('the response JSON path "{path}" should match regex "{pattern}"')
+def step_json_path_matches_regex(context, path: str, pattern: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    val = get_json_path(context.response_json, path)
+    assert re.match(pattern, str(val)), f"Value '{val}' did not match regex '{pattern}'"
+
+@then("the response body should be empty")
+def step_response_body_empty(context):
+    assert context.response is not None, "No response found."
+    assert context.response.text.strip() == "", "Expected empty body."
+
 @then("the response time should be less than {ms:d} ms")
 def step_assert_time(context, ms: int):
     assert context.response is not None, "No response found."
@@ -133,6 +195,30 @@ def step_assert_time(context, ms: int):
 def step_store_response_json_path(context, path: str, var_name: str):
     assert context.response_json is not None, "Response JSON is empty."
     value = get_json_path(context.response_json, path)
-    if not hasattr(context, "vars") or context.vars is None:
-        context.vars = {}
+    if not hasattr(context, "vars") or context.vars is None: context.vars = {}
     context.vars[var_name] = value
+
+@then('the stored variables "{var_a}" and "{var_b}" should be different')
+def step_stored_vars_should_be_different(context, var_a: str, var_b: str):
+    vars = getattr(context, "vars", {})
+    a, b = vars.get(var_a), vars.get(var_b)
+    assert a != b, f"Expected different values, both were '{a}'"
+
+@then('the response JSON path "{path}" should equal stored variable "{var_name}"')
+def step_json_path_equals_stored_var(context, path: str, var_name: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    vars = getattr(context, "vars", {})
+    expected = vars.get(var_name)
+    actual = get_json_path(context.response_json, path)
+    assert actual == expected, f"Expected {expected}, got {actual}"
+
+@then("I print the response JSON")
+def step_print_response_json(context):
+    assert context.response_json is not None, "Response JSON is empty."
+    print("\n===== RESPONSE JSON =====\n" + json.dumps(context.response_json, indent=2, ensure_ascii=False, sort_keys=True) + "\n=========================\n")
+
+@then("I print the request headers")
+def step_print_request_headers(context):
+    assert context.response is not None, "No response found."
+    sent_headers = dict(context.response.request.headers)
+    print("\n===== REQUEST HEADERS (sent) =====\n" + json.dumps(sent_headers, indent=2, ensure_ascii=False, sort_keys=True) + "\n==================================\n")
