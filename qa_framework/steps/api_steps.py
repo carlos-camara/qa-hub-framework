@@ -249,3 +249,15 @@ def step_assert_json_contains_keys(context):
         for row in context.table:
             key = row[0]
             assert key in context.response_json, f"Key '{key}' not found in response JSON."
+
+@then('the response JSON path "{path}" should be true')
+def step_assert_json_path_true(context, path: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    actual = get_json_path(context.response_json, path)
+    assert actual is True or actual == "true" or actual == True, f"Expected true at '{path}', got {actual}"
+
+@then('the response JSON path "{path}" should be false')
+def step_assert_json_path_false(context, path: str):
+    assert context.response_json is not None, "Response JSON is empty."
+    actual = get_json_path(context.response_json, path)
+    assert actual is False or actual == "false" or actual == False, f"Expected false at '{path}', got {actual}"
