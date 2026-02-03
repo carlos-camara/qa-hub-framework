@@ -62,7 +62,7 @@ def get_element_from_page_object(context, element_name, page_name):
     Helper to retrieve a typed element from YAML page objects.
     Supports nested notation like "dashboard.recent_runs".
     
-    Returns a typed element instance (Button, Input, Text, etc.) instead of a raw locator.
+    Returns a typed element instance (Button, Input, Text, etc.) based on the 'type' field.
     """
     from qa_framework.core.element_factory import ElementFactory
     
@@ -71,7 +71,6 @@ def get_element_from_page_object(context, element_name, page_name):
     page_file = parts[0]
     
     # Load the page object YAML from the current working directory
-    # This assumes Behave is run from the project root where features/ exists
     page_objects_dir = os.path.join(os.getcwd(), 'features', 'page_objects')
     
     # Try both .yml and .yaml extensions
@@ -93,8 +92,7 @@ def get_element_from_page_object(context, element_name, page_name):
     with open(yaml_path, 'r') as f:
         page_data = yaml.safe_load(f)
     
-    # Navigate nested structure if needed
-    # First, check if the page name itself is a root key in the YAML
+    # Navigate to the correct page section
     if page_file in page_data:
         page_section = page_data[page_file]
     else:
@@ -107,34 +105,28 @@ def get_element_from_page_object(context, element_name, page_name):
         else:
             raise KeyError(f"Nested path '{part}' not found in '{page_name}'")
     
-    # Search for the element in type-based sections
-    element_types = ['buttons', 'inputs', 'texts', 'webelements']
-    found_type = None
-    locator_data = None
-    
-    for element_type in element_types:
-        if element_type in page_section:
-            if element_name in page_section[element_type]:
-                found_type = element_type.rstrip('s')  # buttons -> button, texts -> text
-                locator_data = page_section[element_type][element_name]
-                break
-    
-    # Fallback: check if element is directly in page_section (old format support)
-    if locator_data is None and element_name in page_section:
-        locator_data = page_section[element_name]
-        found_type = 'webelement'  # Default to generic element
-    
-    if locator_data is None:
+    # Find the element by name
+    if element_name not in page_section:
         raise KeyError(
             f"Element '{element_name}' not found in '{page_name}'. "
-            f"Checked sections: {element_types}. "
             f"Available elements: {list(page_section.keys())}"
         )
+    
+    element_config = page_section[element_name]
+    
+    # Get the type from the element config, default to 'webelement' if not specified
+    element_type = element_config.get('type', 'webelement')
+    
+    # Create locator data dict (by and value)
+    locator_data = {
+        'by': element_config.get('by'),
+        'value': element_config.get('value')
+    }
     
     # Create and return typed element using ElementFactory
     element = ElementFactory.create(
         driver=context.driver,
-        element_type=found_type,
+        element_type=element_type,
         locator_data=locator_data,
         element_name=element_name
     )
