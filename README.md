@@ -12,10 +12,17 @@ A **premium, reusable automated testing framework** designed to streamline test 
 ## ✨ Key Features
 
 - 🏗️ **Page Object Model (POM)**: Standardized structure for UI testing using a robust `BasePage`.
-- 🔌 **Plug-and-Play Integration**: Easily importable into any Python project via Git.
+- **Gherkin-First**: Focused on readable and maintainable test scenarios.
+- **Remote-Ready**: Easily installable via Git for CI/CD pipelines.
 - 🐳 **Pipeline Ready**: Optimized for CI/CD environments with headless Chrome support and standard configurations.
 - 📝 **BDD Integration**: Seamless support for Gherkin syntax via Behave.
 - 🛠️ **Utility Suite**: Built-in driver factory and common steps to reduce boilerplate code.
+
+---
+
+## 📖 Documentation
+
+Check out our professional [Documentation Site](https://carlos-camara.github.io/qa-hub-framework/) for detailed guides on API, GUI, and PDF testing.
 
 ---
 
