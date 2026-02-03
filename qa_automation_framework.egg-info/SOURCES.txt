@@ -1,0 +1,9 @@
+LICENSE
+README.md
+setup.py
+qa_automation_framework.egg-info/PKG-INFO
+qa_automation_framework.egg-info/SOURCES.txt
+qa_automation_framework.egg-info/dependency_links.txt
+qa_automation_framework.egg-info/requires.txt
+qa_automation_framework.egg-info/top_level.txt
+qa_framework/__init__.py

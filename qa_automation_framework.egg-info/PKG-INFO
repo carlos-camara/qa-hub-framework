@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: qa-automation-framework
+Version: 0.1.0
+Summary: Reusable QA Automation Framework for UI and API testing
+License-File: LICENSE
+Requires-Dist: selenium
+Requires-Dist: behave
+Requires-Dist: requests
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
