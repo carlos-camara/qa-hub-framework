@@ -1,0 +1,30 @@
+name: Lint - Super-Linter
+
+on:
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
+permissions:
+  contents: read
+
+jobs:
+  super-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint Codebase Standard
+        uses: carlos-camara/qa-hub-actions/lint-codebase@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          default-branch: main

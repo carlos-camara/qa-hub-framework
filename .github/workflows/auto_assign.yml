@@ -1,0 +1,23 @@
+name: Auto Assign PR
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign-creator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Assign PR to Creator
+        run: gh pr edit "$PR_NUMBER" --add-assignee "$ASSIGNEE" --repo "$REPO"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ASSIGNEE: ${{ github.actor }}
+          REPO: ${{ github.repository }}
