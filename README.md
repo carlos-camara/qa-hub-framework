@@ -32,7 +32,8 @@ graph TD
     B --> F[qa_framework.utils.DriverFactory]
 ```
 
-For more details, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+For more details on our core components, see [ARCHITECTURE.md](./ARCHITECTURE.md).  
+For information on our CI/CD pipelines, see [.github/workflows/README.md](./.github/workflows/README.md).
 
 ---
 
