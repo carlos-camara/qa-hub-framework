@@ -160,6 +160,20 @@ def step_should_see_page_object(context, element_name, page_name):
     element.wait_until_visible()
     assert element.is_displayed(), f"Element '{element_name}' in '{page_name}' is not visible"
 
+@then('the "{element_name}" in "{page_name}" should contain the text "{text}"')
+def step_element_should_contain_text(context, element_name, page_name, text):
+    """Verify that a specific element contains expected text"""
+    element = get_element_from_page_object(context, element_name, page_name)
+    
+    # Get text using appropriate method based on element type
+    if hasattr(element, 'get_text'):
+        element_text = element.get_text()
+    else:
+        element_text = element._find_element().text
+    
+    assert text in element_text, \
+        f"Element '{element_name}' in '{page_name}' does not contain text '{text}'. Found: '{element_text}'"
+
 @then('I should see at least {count:d} elements with class "{class_name}"')
 def step_should_see_at_least_elements_by_class(context, count, class_name):
     # Use CSS selector to handle Tailwind classes with special characters like "bg-slate-950/40"
