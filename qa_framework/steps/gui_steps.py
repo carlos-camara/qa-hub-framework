@@ -62,13 +62,13 @@ def get_locator_from_page_object(context, locator_name, page_name):
     Helper to retrieve locator from YAML page objects.
     Supports nested notation like "dashboard.recent_runs".
     """
-    from qa_framework.core.base_page import BasePage
     # Split page name by dots for nested access
     parts = page_name.split('.')
     page_file = parts[0]
     
-    # Load the page object YAML
-    page_objects_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'features', 'page_objects')
+    # Load the page object YAML from the current working directory
+    # This assumes Behave is run from the project root where features/ exists
+    page_objects_dir = os.path.join(os.getcwd(), 'features', 'page_objects')
     yaml_path = os.path.join(page_objects_dir, f"{page_file}.yml")
     
     if not os.path.exists(yaml_path):
