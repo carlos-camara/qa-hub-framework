@@ -217,8 +217,35 @@ def step_print_response_json(context):
     assert context.response_json is not None, "Response JSON is empty."
     print("\n===== RESPONSE JSON =====\n" + json.dumps(context.response_json, indent=2, ensure_ascii=False, sort_keys=True) + "\n=========================\n")
 
-@then("I print the request headers")
+@then(u'I print the request headers')
 def step_print_request_headers(context):
     assert context.response is not None, "No response found."
     sent_headers = dict(context.response.request.headers)
     print("\n===== REQUEST HEADERS (sent) =====\n" + json.dumps(sent_headers, indent=2, ensure_ascii=False, sort_keys=True) + "\n==================================\n")
+
+@then('the response header "{header_name}" should contain "{expected}"')
+def step_assert_response_header_contains(context, header_name: str, expected: str):
+    assert context.response is not None, "No response found."
+    headers = context.response.headers
+    actual = get_header_case_insensitive(headers, header_name)
+    assert expected in actual, f"Expected '{expected}' to be in '{actual}'"
+
+@then('the response JSON should not be empty')
+def step_assert_json_not_empty(context):
+    assert context.response_json is not None, "Response JSON is None."
+    if isinstance(context.response_json, dict):
+        assert len(context.response_json) > 0, "Response JSON is an empty dictionary."
+    elif isinstance(context.response_json, list):
+        assert len(context.response_json) > 0, "Response JSON is an empty list."
+    else:
+        # If it's a scalar, just check it's not None (already asserted above)
+        pass
+
+@then('the response JSON should contain keys')
+def step_assert_json_contains_keys(context):
+    assert context.response_json is not None, "Response JSON is None."
+    assert isinstance(context.response_json, dict), "Response JSON is not a dictionary."
+    if context.table:
+        for row in context.table:
+            key = row[0]
+            assert key in context.response_json, f"Key '{key}' not found in response JSON."
