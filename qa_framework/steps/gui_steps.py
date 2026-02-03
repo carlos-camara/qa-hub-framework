@@ -90,12 +90,21 @@ def get_locator_from_page_object(context, locator_name, page_name):
         page_data = yaml.safe_load(f)
     
     # Navigate nested structure if needed
-    locators = page_data.get('locators', {})
+    # First, check if the page name itself is a root key in the YAML
+    if page_file in page_data:
+        locators = page_data[page_file]
+    else:
+        locators = page_data.get('locators', page_data)
+    
+    # Handle additional nesting like "dashboard.recent_runs"
     for part in parts[1:]:
-        locators = locators.get(part, {})
+        if isinstance(locators, dict) and part in locators:
+            locators = locators[part]
+        else:
+            raise KeyError(f"Nested path '{part}' not found in '{page_name}'")
     
     if locator_name not in locators:
-        raise KeyError(f"Locator '{locator_name}' not found in '{page_name}'")
+        raise KeyError(f"Locator '{locator_name}' not found in '{page_name}'. Available locators: {list(locators.keys())}")
     
     locator_data = locators[locator_name]
     by_type = locator_data['by']
