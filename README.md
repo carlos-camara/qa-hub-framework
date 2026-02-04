@@ -114,6 +114,48 @@ Then the "stats grid" element should visually match the baseline image "dashboar
 
 ---
 
+## 🎭 Playwright Integration
+
+The framework supports Playwright as an alternative to Selenium, offering faster execution and better stability for modern web apps.
+
+### Installation
+
+After installing requirements, run the Playwright browser installer:
+
+```bash
+pip install -r requirements.txt
+playwright install
+```
+
+> [!NOTE]
+> The `playwright install` command downloads browser binaries. For CI environments, you may need to run `playwright install-deps` first.
+
+### Configuration
+
+To use Playwright instead of Selenium, configure `features/config/properties.cfg`:
+
+```ini
+[Driver]
+web_library: playwright
+type: chrome          # chrome | firefox | edge | webkit
+headless: true
+```
+
+### Supported Browsers
+
+| Browser    | Selenium | Playwright |
+|------------|----------|------------|
+| Chrome     | ✅       | ✅         |
+| Firefox    | ✅       | ✅         |
+| Edge       | ✅       | ✅         |
+| WebKit     | ❌       | ✅         |
+
+> [!TIP]
+> WebKit is the engine behind Safari. Use it for cross-browser testing without macOS.
+
+---
+
+
 ## 🛠️ Configuration
 
 The framework uses environment variables and standard Python configurations. The `get_driver` utility supports:
