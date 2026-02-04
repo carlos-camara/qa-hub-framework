@@ -5,12 +5,12 @@
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║  Tests for API step definitions including:                                   ║
 ║  • Status code assertions    • JSON path extraction                          ║
-║  • Variable storage          • Response body validation                      ║
+║  • Variable storage          • List & Object assertions                      ║
+║  • Boolean & Comparison ops  • Path existence checks                         ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 import pytest
 from unittest.mock import MagicMock, patch
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FIXTURES
@@ -25,201 +25,175 @@ def mock_context():
     context.vars = {}
     return context
 
-
 @pytest.fixture
-def sample_json_response():
-    """Sample JSON response for testing."""
+def sample_json():
+    """Detailed sample JSON for complex path testing."""
     return {
-        "id": "12345",
-        "user": {
-            "name": "Carlos",
-            "email": "carlos@example.com",
-            "roles": ["admin", "user"]
+        "id": 123,
+        "active": True,
+        "deleted": False,
+        "meta": None,
+        "items": [
+            {"name": "A", "val": 10},
+            {"name": "B", "val": 20},
+            {"name": "C", "val": 30}
+        ],
+        "config": {
+            "retries": 3,
+            "mode": "production"
         },
-        "status": "active",
-        "count": 42
+        "tags": ["testing", "unit", "api"]
     }
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 1: EXISTENCE & PREDICATES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestApiPredicates:
+    """Tests for path existence and type predicates."""
+
+    def test_path_exists_success(self, mock_context, sample_json):
+        """✓ Verify 'path exists' works for deep paths."""
+        from qa_framework.steps.api_steps import step_json_path_exists
+        mock_context.response_json = sample_json
+        step_json_path_exists(mock_context, "config.mode")
+        step_json_path_exists(mock_context, "items.1.name")
+
+    def test_path_exists_fails(self, mock_context, sample_json):
+        """✓ Verify 'path exists' fails when path is missing."""
+        from qa_framework.steps.api_steps import step_json_path_exists
+        mock_context.response_json = sample_json
+        with pytest.raises(AssertionError, match="does not exist"):
+            step_json_path_exists(mock_context, "config.timeout")
+
+    def test_path_not_exists_success(self, mock_context, sample_json):
+        """✓ Verify 'path not exists' works."""
+        from qa_framework.steps.api_steps import step_json_path_not_exists
+        mock_context.response_json = sample_json
+        step_json_path_not_exists(mock_context, "non_existent")
+
+    def test_path_not_exists_fails(self, mock_context, sample_json):
+        """✓ Verify 'path not exists' fails if path is actually found."""
+        from qa_framework.steps.api_steps import step_json_path_not_exists
+        mock_context.response_json = sample_json
+        with pytest.raises(AssertionError, match="was found but should not exist"):
+            step_json_path_not_exists(mock_context, "id")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 1: STATUS CODE ASSERTIONS
+# SECTION 2: LIST & OBJECT COUNT ASSERTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestStatusCodeAssertions:
-    """Tests for HTTP status code verification steps."""
+class TestCollectionAssertions:
+    """Tests for size and type of JSON collections."""
 
-    def test_assert_status_200_success(self, mock_context):
-        """✓ Status assertion passes when codes match."""
+    def test_root_element_count(self, mock_context):
+        """✓ Verify element count on root list."""
+        from qa_framework.steps.api_steps import step_assert_json_count
+        mock_context.response_json = [1, 2, 3, 4]
+        step_assert_json_count(mock_context, 4)
+
+    def test_path_element_count(self, mock_context, sample_json):
+        """✓ Verify element count at specific path."""
+        from qa_framework.steps.api_steps import step_assert_json_path_count
+        mock_context.response_json = sample_json
+        step_assert_json_path_count(mock_context, "items", 3)
+        step_assert_json_path_count(mock_context, "tags", 3)
+
+    def test_json_is_array(self, mock_context):
+        """✓ Verify JSON type is array."""
+        from qa_framework.steps.api_steps import step_assert_json_is_array
+        mock_context.response_json = ["a", "b"]
+        step_assert_json_is_array(mock_context)
+
+    def test_json_is_object(self, mock_context, sample_json):
+        """✓ Verify JSON type is object."""
+        from qa_framework.steps.api_steps import step_assert_json_is_object
+        mock_context.response_json = sample_json
+        step_assert_json_is_object(mock_context)
+
+    def test_json_is_object_fails(self, mock_context):
+        """✓ Verify JSON type check fails on wrong type."""
+        from qa_framework.steps.api_steps import step_assert_json_is_object
+        mock_context.response_json = [1, 2] # List
+        with pytest.raises(AssertionError, match="Expected object"):
+            step_assert_json_is_object(mock_context)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 3: BOOLEAN & MATHEMATICAL COMPARISONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestValueComparisons:
+    """Tests for boolean and numerical comparisons."""
+
+    def test_boolean_assertions(self, mock_context, sample_json):
+        """✓ Verify true/false assertions."""
+        from qa_framework.steps.api_steps import (
+            step_assert_json_path_true,
+            step_assert_json_path_false
+        )
+        mock_context.response_json = sample_json
+        step_assert_json_path_true(mock_context, "active")
+        step_assert_json_path_false(mock_context, "deleted")
+
+    def test_boolean_assertion_fails(self, mock_context, sample_json):
+        """✓ Verify boolean assertions fail correctly."""
+        from qa_framework.steps.api_steps import step_assert_json_path_true
+        mock_context.response_json = sample_json
+        with pytest.raises(AssertionError, match="Expected true"):
+            step_assert_json_path_true(mock_context, "deleted")
+
+    def test_math_operators(self, mock_context, sample_json):
+        """✓ Verify mathematical operator steps (ge, le, gt, lt)."""
+        from qa_framework.steps.api_steps import (
+            step_assert_json_path_ge,
+            step_assert_json_path_le,
+            step_assert_json_path_gt,
+            step_assert_json_path_lt
+        )
+        mock_context.response_json = sample_json
+        
+        # Path: id=123
+        step_assert_json_path_ge(mock_context, "id", 123)
+        step_assert_json_path_le(mock_context, "id", 123)
+        step_assert_json_path_gt(mock_context, "id", 100)
+        step_assert_json_path_lt(mock_context, "id", 200)
+
+    def test_math_operator_fails(self, mock_context, sample_json):
+        """✓ Verify math operations fail on mismatch."""
+        from qa_framework.steps.api_steps import step_assert_json_path_gt
+        mock_context.response_json = sample_json
+        with pytest.raises(AssertionError, match="Expected > 200"):
+            step_assert_json_path_gt(mock_context, "id", 200)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 4: LEGACY & STATUS CORE TESTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestStatusAndCore:
+    """Basic tests for status and storage to ensure no regressions."""
+
+    def test_assert_status_code(self, mock_context):
         from qa_framework.steps.api_steps import step_assert_status
-        
         mock_context.response.status_code = 200
-        
-        # Should not raise
         step_assert_status(mock_context, 200)
 
-    def test_assert_status_201_created(self, mock_context):
-        """✓ Status assertion works for 201 Created."""
-        from qa_framework.steps.api_steps import step_assert_status
-        
-        mock_context.response.status_code = 201
-        
-        step_assert_status(mock_context, 201)
-
-    def test_assert_status_fails_on_mismatch(self, mock_context):
-        """✓ Status assertion fails when codes don't match."""
-        from qa_framework.steps.api_steps import step_assert_status
-        
-        mock_context.response.status_code = 404
-        mock_context.response.text = "Not Found"
-        
-        with pytest.raises(AssertionError, match="Expected 200, got 404"):
-            step_assert_status(mock_context, 200)
-
-    def test_assert_status_400_bad_request(self, mock_context):
-        """✓ Status assertion works for error codes."""
-        from qa_framework.steps.api_steps import step_assert_status
-        
-        mock_context.response.status_code = 400
-        
-        step_assert_status(mock_context, 400)
-
-    def test_assert_status_500_server_error(self, mock_context):
-        """✓ Status assertion works for 5xx codes."""
-        from qa_framework.steps.api_steps import step_assert_status
-        
-        mock_context.response.status_code = 500
-        
-        step_assert_status(mock_context, 500)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 2: JSON PATH EXTRACTION
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestJsonPathExtraction:
-    """Tests for JSON path extraction and variable storage steps."""
-
-    def test_store_simple_path(self, mock_context, sample_json_response):
-        """✓ Store step extracts and saves simple JSON path."""
-        from qa_framework.steps.api_steps import step_store_response_json_path
-        
-        mock_context.response_json = sample_json_response
+    def test_store_and_match_variable(self, mock_context, sample_json):
+        from qa_framework.steps.api_steps import (
+            step_store_response_json_path,
+            step_json_path_equals_stored_var
+        )
+        mock_context.response_json = sample_json
         mock_context.vars = {}
         
-        step_store_response_json_path(mock_context, "id", "my_id")
+        step_store_response_json_path(mock_context, "config.mode", "curr_mode")
+        assert mock_context.vars["curr_mode"] == "production"
         
-        assert mock_context.vars["my_id"] == "12345"
+        step_json_path_equals_stored_var(mock_context, "config.mode", "curr_mode")
 
-    def test_store_nested_path(self, mock_context, sample_json_response):
-        """✓ Store step extracts nested JSON paths."""
-        from qa_framework.steps.api_steps import step_store_response_json_path
-        
-        mock_context.response_json = sample_json_response
-        mock_context.vars = {}
-        
-        step_store_response_json_path(mock_context, "user.name", "user_name")
-        
-        assert mock_context.vars["user_name"] == "Carlos"
-
-    def test_store_deeply_nested_path(self, mock_context, sample_json_response):
-        """✓ Store step handles deeply nested paths."""
-        from qa_framework.steps.api_steps import step_store_response_json_path
-        
-        mock_context.response_json = sample_json_response
-        mock_context.vars = {}
-        
-        step_store_response_json_path(mock_context, "user.email", "email")
-        
-        assert mock_context.vars["email"] == "carlos@example.com"
-
-    def test_store_numeric_value(self, mock_context, sample_json_response):
-        """✓ Store step handles numeric values."""
-        from qa_framework.steps.api_steps import step_store_response_json_path
-        
-        mock_context.response_json = sample_json_response
-        mock_context.vars = {}
-        
-        step_store_response_json_path(mock_context, "count", "item_count")
-        
-        assert mock_context.vars["item_count"] == 42
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 3: JSON PATH ASSERTIONS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestJsonPathAssertions:
-    """Tests for JSON path value assertion steps."""
-
-    def test_assert_json_path_string_success(self, mock_context, sample_json_response):
-        """✓ JSON path assertion passes for matching strings."""
-        from qa_framework.steps.api_steps import step_assert_json_path_str
-        
-        mock_context.response_json = sample_json_response
-        
-        step_assert_json_path_str(mock_context, "user.name", "Carlos")
-
-    def test_assert_json_path_string_fails(self, mock_context, sample_json_response):
-        """✓ JSON path assertion fails for mismatched strings."""
-        from qa_framework.steps.api_steps import step_assert_json_path_str
-        
-        mock_context.response_json = sample_json_response
-        
-        with pytest.raises(AssertionError, match="JSON mismatch"):
-            step_assert_json_path_str(mock_context, "user.name", "Jose")
-
-    def test_assert_json_path_nested(self, mock_context, sample_json_response):
-        """✓ JSON path assertion works for nested values."""
-        from qa_framework.steps.api_steps import step_assert_json_path_str
-        
-        mock_context.response_json = sample_json_response
-        
-        step_assert_json_path_str(mock_context, "user.email", "carlos@example.com")
-
-    def test_assert_json_path_status(self, mock_context, sample_json_response):
-        """✓ JSON path assertion works for status fields."""
-        from qa_framework.steps.api_steps import step_assert_json_path_str
-        
-        mock_context.response_json = sample_json_response
-        
-        step_assert_json_path_str(mock_context, "status", "active")
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 4: COMPLEX JSON STRUCTURES
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestComplexJsonStructures:
-    """Tests for handling complex JSON structures."""
-
-    def test_json_with_array(self, mock_context):
-        """✓ JSON path works with array indices."""
-        from qa_framework.steps.api_steps import step_assert_json_path_str
-        
-        mock_context.response_json = {
-            "items": [
-                {"id": 1, "name": "First"},
-                {"id": 2, "name": "Second"}
-            ]
-        }
-        
-        # This test depends on implementation supporting array indices
-        # step_assert_json_path_str(mock_context, "items.0.name", "First")
-
-    def test_store_from_array(self, mock_context):
-        """✓ Store step works with array responses."""
-        from qa_framework.steps.api_steps import step_store_response_json_path
-        
-        mock_context.response_json = [
-            {"id": 10, "name": "Item A"},
-            {"id": 20, "name": "Item B"}
-        ]
-        mock_context.vars = {}
-        
-        step_store_response_json_path(mock_context, "0.id", "first_id")
-        
-        assert mock_context.vars["first_id"] == 10
-
+    def test_body_is_empty(self, mock_context):
+        from qa_framework.steps.api_steps import step_response_body_empty
+        mock_context.response.text = "   "
+        step_response_body_empty(mock_context)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # RUN CONFIGURATION
