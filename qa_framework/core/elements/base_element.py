@@ -7,7 +7,7 @@ from selenium.webdriver.remote.webelement import WebElement as SeleniumWebElemen
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from typing import Tuple
+from typing import Tuple, Any
 
 
 class WebElement:
@@ -16,12 +16,12 @@ class WebElement:
     Wraps Selenium WebElement with convenient methods.
     """
     
-    def __init__(self, driver: WebDriver, locator: Tuple[str, str], name: str = None):
+    def __init__(self, driver: Any, locator: Tuple[str, str], name: str = None):
         """
         Initialize a WebElement.
         
         Args:
-            driver: Selenium WebDriver instance
+            driver: Selenium WebDriver or Playwright Page wrapper
             locator: Tuple of (By type, value) e.g., (By.ID, "button-id")
             name: Optional name for better error messages
         """
@@ -30,8 +30,11 @@ class WebElement:
         self.name = name or f"{locator[0]}={locator[1]}"
         self._element = None
     
-    def _find_element(self, timeout: int = 10) -> SeleniumWebElement:
-        """Find and return the Selenium WebElement."""
+    def _find_element(self, timeout: int = 10) -> Any:
+        """Find and return the underlying element."""
+        if hasattr(self.driver, 'page'): # PlaywrightWrapper
+            return self.driver.find_element(self.locator[0], self.locator[1])
+            
         try:
             return WebDriverWait(self.driver, timeout).until(
                 EC.presence_of_element_located(self.locator)
@@ -89,6 +92,10 @@ class WebElement:
     
     def wait_until_visible(self, timeout: int = 10):
         """Wait until element is visible."""
+        if hasattr(self.driver, 'page'):
+            self.driver.page.wait_for_selector(self.driver._convert_locator(self.locator[0], self.locator[1]), state="visible", timeout=timeout*1000)
+            return
+
         try:
             WebDriverWait(self.driver, timeout).until(
                 EC.visibility_of_element_located(self.locator)
@@ -100,6 +107,11 @@ class WebElement:
     
     def wait_until_clickable(self, timeout: int = 10):
         """Wait until element is clickable."""
+        if hasattr(self.driver, 'page'):
+            self.driver.page.wait_for_selector(self.driver._convert_locator(self.locator[0], self.locator[1]), state="visible", timeout=timeout*1000)
+            # Playwright doesn't have a direct 'clickable' state in wait_for_selector but we can assume visible + not disabled
+            return
+
         try:
             WebDriverWait(self.driver, timeout).until(
                 EC.element_to_be_clickable(self.locator)
@@ -111,6 +123,10 @@ class WebElement:
     
     def wait_until_invisible(self, timeout: int = 10):
         """Wait until element is no longer visible."""
+        if hasattr(self.driver, 'page'):
+            self.driver.page.wait_for_selector(self.driver._convert_locator(self.locator[0], self.locator[1]), state="hidden", timeout=timeout*1000)
+            return
+
         try:
             WebDriverWait(self.driver, timeout).until(
                 EC.invisibility_of_element_located(self.locator)

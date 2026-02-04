@@ -9,6 +9,11 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from .driver_manager import DriverManager
 
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None
+
 import re
 
 def resolve_config_variable(config, value):
@@ -47,14 +52,20 @@ def get_driver(headless=True, no_sandbox=True, window_size="1365,768"):
     width = None
     height = None
     
+    web_library = "selenium"
+    
     if config.has_section('Driver'):
         driver_type = config.get('Driver', 'type', fallback='chrome').lower()
+        web_library = config.get('Driver', 'web_library', fallback='selenium').lower()
         if config.has_option('Driver', 'headless'):
             headless = config.getboolean('Driver', 'headless')
         
         # Read window dimensions from config if provided
         width = config.get('Driver', 'window_width', fallback=None)
         height = config.get('Driver', 'window_height', fallback=None)
+
+    if web_library == "playwright":
+        return get_playwright_driver(driver_type, headless, width, height, window_size)
 
     # Determine window size strategy
     use_custom_size = width and height
@@ -123,3 +134,42 @@ def get_driver(headless=True, no_sandbox=True, window_size="1365,768"):
 
     driver.implicitly_wait(5)
     return driver
+
+def get_playwright_driver(driver_type, headless, width, height, window_size):
+    """Initializes Playwright and returns a page object wrapped for compatibility."""
+    if sync_playwright is None:
+        raise ImportError("Playwright not installed. Add it to requirements.txt and run pip install.")
+    
+    playwright_instance = sync_playwright().start()
+    
+    browser_type_map = {
+        "chrome": playwright_instance.chromium,
+        "chromium": playwright_instance.chromium,
+        "firefox": playwright_instance.firefox,
+        "webkit": playwright_instance.webkit,
+        "edge": playwright_instance.chromium # Playwright uses Chromium for Edge
+    }
+    
+    browser_engine = browser_type_map.get(driver_type, playwright_instance.chromium)
+    
+    launch_args = {}
+    if driver_type == "edge":
+        launch_args["channel"] = "msedge"
+    elif driver_type == "chrome":
+        launch_args["channel"] = "chrome"
+
+    browser = browser_engine.launch(headless=headless, **launch_args)
+    
+    viewport = None
+    if width and height:
+        viewport = {"width": int(width), "height": int(height)}
+    else:
+        w, h = window_size.split(',')
+        viewport = {"width": int(w), "height": int(h)}
+        
+    context = browser.new_context(viewport=viewport)
+    page = context.new_page()
+    
+    # We return a wrapper that provides Selenium-like methods
+    from .playwright_wrapper import PlaywrightWrapper
+    return PlaywrightWrapper(page, browser, playwright_instance)

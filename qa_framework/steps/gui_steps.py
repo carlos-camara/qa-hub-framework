@@ -7,6 +7,46 @@ import time
 from ..core.language_handler import LanguageHandler
 from ..utils.visual import VisualHandler
 
+def wait_for_visible(driver, locator, timeout=10):
+    """Agnostic wait for visibility."""
+    if hasattr(driver, 'page'):
+        selector = driver._convert_locator(locator[0], locator[1])
+        driver.page.wait_for_selector(selector, state="visible", timeout=timeout*1000)
+    else:
+        WebDriverWait(driver, timeout).until(EC.visibility_of_element_located(locator))
+
+def wait_for_clickable(driver, locator, timeout=10):
+    """Agnostic wait for clickability."""
+    if hasattr(driver, 'page'):
+        selector = driver._convert_locator(locator[0], locator[1])
+        driver.page.wait_for_selector(selector, state="visible", timeout=timeout*1000)
+    else:
+        WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(locator))
+
+def wait_for_presence(driver, locator, timeout=10):
+    """Agnostic wait for presence."""
+    if hasattr(driver, 'page'):
+        selector = driver._convert_locator(locator[0], locator[1])
+        driver.page.wait_for_selector(selector, state="attached", timeout=timeout*1000)
+    else:
+        WebDriverWait(driver, timeout).until(EC.presence_of_element_located(locator))
+
+def wait_for_title(driver, title, timeout=10):
+    """Agnostic wait for title."""
+    if hasattr(driver, 'page'):
+        # Playwright doesn't have a direct title wait, so we poll
+        import time
+        start = time.time()
+        while time.time() - start < timeout:
+            if driver.title == title:
+                return True
+            time.sleep(0.5)
+        raise TimeoutException(f"Title '{title}' not found. Current: '{driver.title}'")
+    else:
+        WebDriverWait(driver, timeout).until(EC.title_is(title))
+
+from selenium.common.exceptions import TimeoutException
+
 def resolve_tokens(context, text):
     """
     Resolve tokens in the text.
@@ -38,7 +78,7 @@ def step_navigate_to_url(context, url):
 @then('the page title should be "{expected_title}"')
 def step_verify_page_title(context, expected_title):
     resolved_title = resolve_i18n(context, expected_title)
-    WebDriverWait(context.driver, 10).until(EC.title_is(resolved_title))
+    wait_for_title(context.driver, resolved_title)
     assert context.driver.title == resolved_title
 
 @when('I click on the element with text "{text}"')
@@ -46,7 +86,8 @@ def step_click_element_by_text(context, text):
     resolved_text = resolve_i18n(context, text)
     # Using a generic XPath for text matching
     locator = (By.XPATH, f"//*[contains(text(), '{resolved_text}')]")
-    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable(locator))
+    wait_for_clickable(context.driver, locator)
+    element = context.driver.find_element(*locator)
     element.click()
 
 @when('I click on the button with text "{button_text}"')
@@ -54,7 +95,9 @@ def step_click_button_by_text(context, button_text):
     resolved_text = resolve_i18n(context, button_text)
     # Use XPath with translate for case-insensitive matching
     xpath = f"//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{resolved_text.lower()}')]"
-    element = WebDriverWait(context.driver, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+    locator = (By.XPATH, xpath)
+    wait_for_clickable(context.driver, locator)
+    element = context.driver.find_element(*locator)
     element.click()
 
 @then('I should see the text "{text}"')
@@ -71,7 +114,8 @@ def step_verify_text_present(context, text):
 @then('I should see an element with class "{class_name}"')
 def step_verify_element_by_class(context, class_name):
     locator = (By.CLASS_NAME, class_name)
-    element = WebDriverWait(context.driver, 10).until(EC.visibility_of_element_located(locator))
+    wait_for_visible(context.driver, locator)
+    element = context.driver.find_element(*locator)
     assert element.is_displayed()
 
 @when('I scroll to the bottom of the page')
@@ -229,10 +273,10 @@ def step_should_see_at_least_elements_by_class(context, count, class_name):
     # Escape special characters for CSS selector
     escaped_class = class_name.replace('/', '\\/')
     css_selector = f".{escaped_class}"
+    locator = (By.CSS_SELECTOR, css_selector)
     
-    elements = WebDriverWait(context.driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, css_selector))
-    )
+    wait_for_presence(context.driver, locator)
+    elements = context.driver.find_elements(*locator)
     assert len(elements) >= count, f"Expected at least {count} elements with class '{class_name}', found {len(elements)}"
 
 @then('I should see at least {count:d} elements with selector "{element_name}" in "{page_name}"')
@@ -241,9 +285,8 @@ def step_should_see_at_least_elements_in_page_object(context, count, element_nam
     element = get_element_from_page_object(context, element_name, page_name)
     
     # We use the underlying locator from the typed element
-    elements = WebDriverWait(context.driver, 10).until(
-        EC.presence_of_all_elements_located(element.locator)
-    )
+    wait_for_presence(context.driver, element.locator)
+    elements = context.driver.find_elements(*element.locator)
     assert len(elements) >= count, \
         f"Expected at least {count} elements for '{element_name}' in '{page_name}', found {len(elements)}"
 
