@@ -34,7 +34,42 @@ By setting the "current page", you can write shorter, more readable steps:
 ```gherkin
 Given the "dashboard" page is displayed
 Then I should see the "stats_panel"
+And I click on the "settings_icon"
 ```
+
+---
+
+## 🖱️ Advanced Interactions
+
+### Mouse Actions
+- `When I hover over the "{element}"`
+- `When I double click on the "{element}"`
+
+### Keyboard Support
+Simulate key presses for complex forms or shortcuts:
+- `When I press the "Enter" key`
+- `When I press the "Escape" key`
+- `When I press the "Tab" key`
+
+---
+
+## 🔲 Window & Frame Management
+
+Handle multiple tabs, iframes, and native browser alerts seamlessly.
+
+- **Tabs**: `When I switch to the next tab` and `When I close the current tab`.
+- **Iframes**: `When I switch to the iframe "{element}"` and `When I switch back to the default content`.
+- **Alerts**: `When I accept the alert`.
+
+---
+
+## ✅ Advanced Validations
+
+Go beyond simple visibility checks:
+
+- **Attributes**: `Then the "submit_btn" should have the attribute "disabled" with value "true"`
+- **URL**: `Then the URL should contain "/v2/dashboard"`
+- **State**: `Then the "loading_spinner" should be hidden`
 
 ---
 
@@ -42,12 +77,7 @@ Then I should see the "stats_panel"
 
 Verify UI consistency using pixel-based comparison against verified baselines.
 
-### Screenshot Capture
-```gherkin
-Then I take a screenshot named "login-page-state"
-```
-
-### Visual Match with Thresholds
+### Match with Thresholds
 For dynamic environments, allow for minor rendering differences:
 ```gherkin
 Then the "Charts" page should visually match "dashboard_snapshot" with a 5.0% tolerance
@@ -58,12 +88,19 @@ Then the "Charts" page should visually match "dashboard_snapshot" with a 5.0% to
 
 ---
 
-## 🛡️ Synchronization
+## 🔄 Common Utilities
 
-The framework automatically handles common timing issues through driver-agnostic wait utilities:
+### Variable Storage
+Extract data from the UI to use in subsequent steps (even in API steps!):
+```gherkin
+When I store the text of the "order_id_label" as "OrderID"
+And I navigate to "/api/v1/orders/${OrderID}"
+```
+
+### Synchronization
 - `wait_for_visible()`: Ensures the element is in DOM and clickable.
 - `wait_for_clickable()`: Ensures the element is enabled.
-- `wait_for_title()`: Waits for page transitons.
+- `wait_for_title()`: Waits for page transitions.
 
-!!! tip "Performance"
-    The framework uses optimized polling and explicit waits instead of `time.sleep()`, resulting in faster and more stable tests.
+!!! tip "Explicit Timing"
+    While discouraged, you can use `When I wait for 2 seconds` for handling tricky animations.
