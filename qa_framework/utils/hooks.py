@@ -61,8 +61,8 @@ class FrameworkHooks:
                     context.embed('image/png', data, caption=f"Failure: {step.name}")
                 
                 # Log to stdout for HTML formatters or consoles
-                abspath = os.path.abspath(filepath)
-                print(f"\n[FAILURE] Screenshot: file:///{abspath.replace('\\', '/')}")
+                abspath = os.path.abspath(filepath).replace('\\', '/')
+                print(f"\n[FAILURE] Screenshot: file:///{abspath}")
                 
                 context.screenshots.append(filepath)
             except Exception as e:
