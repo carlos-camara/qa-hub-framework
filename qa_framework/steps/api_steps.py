@@ -28,6 +28,7 @@ from qa_framework.utils.http import (
     get_json_path,
     get_header_case_insensitive
 )
+from qa_framework.utils.logger import ContextualLogger
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SECTION 1: REQUEST CONFIGURATION
@@ -65,6 +66,8 @@ def step_send_request_simple(context, method: str, path: str):
     context.last_request = {"method": method_u, "url": url, "params": None, "json": None}
     if not hasattr(context, "default_headers") or context.default_headers is None:
         context.default_headers = {}
+    
+    ContextualLogger.info(f"Sending {method_u} request to: {url}", context)
     resp = requests.request(method=method_u, url=url, headers=context.default_headers, timeout=20)
     context.response = resp
     try:
@@ -362,6 +365,7 @@ def step_store_response_json_path(context, path: str, var_name: str):
     value = get_json_path(context.response_json, path)
     if not hasattr(context, "vars") or context.vars is None: context.vars = {}
     context.vars[var_name] = value
+    ContextualLogger.debug(f"Stored JSON value from '{path}' as '${{{var_name}}}': {value}", context)
 
 @then('the response JSON path "{path}" should equal stored variable "{var_name}"')
 def step_json_path_equals_stored_var(context, path: str, var_name: str):
@@ -387,16 +391,16 @@ def step_stored_vars_should_be_different(context, var_a: str, var_b: str):
 def step_print_response_json(context):
     """Pretty-print the response JSON for debugging."""
     assert context.response_json is not None, "Response JSON is empty."
-    print("\n" + "═"*25 + " RESPONSE JSON " + "═"*25)
+    ContextualLogger.section("Response JSON")
     print(json.dumps(context.response_json, indent=2, ensure_ascii=False, sort_keys=True))
-    print("═"*65 + "\n")
+    print("═"*65)
 
 @then(u'I print the request headers')
 def step_print_request_headers(context):
     """Print the headers actually sent in the last request."""
     assert context.response is not None, "No response found."
     sent_headers = dict(context.response.request.headers)
-    print("\n" + "═"*20 + " REQUEST HEADERS (sent) " + "═"*20)
+    ContextualLogger.section("Request Headers (sent)")
     print(json.dumps(sent_headers, indent=2, ensure_ascii=False, sort_keys=True))
-    print("═"*65 + "\n")
+    print("═"*65)
 

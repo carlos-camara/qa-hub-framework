@@ -22,6 +22,7 @@ import os
 import time
 from ..core.language_handler import LanguageHandler
 from ..utils.visual import VisualHandler
+from ..utils.logger import ContextualLogger
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -201,7 +202,9 @@ def step_navigate_to_url(context, url):
     Example:
         Given I navigate to "https://example.com/login"
     """
-    context.driver.get(url)
+    resolved_url = resolve_tokens(context, url)
+    ContextualLogger.info(f"Navigating to: {resolved_url}", context)
+    context.driver.get(resolved_url)
 
 
 @then('the page title should be "{expected_title}"')
@@ -829,6 +832,7 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
         os.makedirs(ss_dir)
         
     current_path = os.path.join(ss_dir, f"{screenshot_name}_latest.png")
+    ContextualLogger.info(f"Capturing visual snapshot: {screenshot_name}", context)
     context.driver.save_screenshot(current_path)
     
     # Compare against baseline
@@ -927,7 +931,9 @@ def step_switch_to_next_tab(context):
     handles = context.driver.window_handles
     current = context.driver.current_window_handle
     next_index = (handles.index(current) + 1) % len(handles)
-    context.driver.switch_to.window(handles[next_index])
+    new_handle = handles[next_index]
+    ContextualLogger.info(f"Switching to window handle: {new_handle}", context)
+    context.driver.switch_to.window(new_handle)
 
 
 @when('I close the current tab')
@@ -948,6 +954,7 @@ def step_switch_to_iframe(context, element_name):
     """
     page_name = getattr(context, 'current_page', None)
     element = get_element_from_page_object(context, element_name, page_name)
+    ContextualLogger.info(f"Switching to iframe: {element_name}", context)
     context.driver.switch_to.frame(element._find_element())
 
 

@@ -12,6 +12,7 @@
 """
 from behave import step
 import time
+from qa_framework.utils.logger import ContextualLogger
 
 @step('I wait for {seconds:f} seconds')
 @step('I wait for {seconds:d} second')
@@ -20,6 +21,7 @@ def step_wait_seconds(context, seconds):
     """
     Explicit wait. Use sparingly; prefer specialized waits in Page Objects.
     """
+    ContextualLogger.warning(f"Explicit wait for {seconds} seconds. Prefer using wait_until_* on elements.", context)
     time.sleep(float(seconds))
 
 
@@ -40,3 +42,4 @@ def step_store_element_text(context, element_name, var_name):
     if not hasattr(context, 'vars') or context.vars is None:
         context.vars = {}
     context.vars[var_name] = text
+    ContextualLogger.debug(f"Stored UI text from '{element_name}' as '${{{var_name}}}': {text}", context)
