@@ -11,4 +11,9 @@ setup(
     description="Reusable QA Automation Framework for UI and API testing",
     packages=find_packages(),
     install_requires=read_requirements(),
+    entry_points={
+        'console_scripts': [
+            'qa-hub = qa_framework.cli:main',
+        ],
+    },
 )
