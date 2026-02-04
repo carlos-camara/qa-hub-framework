@@ -12,13 +12,13 @@ A **premium, reusable automated testing framework** designed to streamline test 
 ## ✨ Key Features
 
 - 🏗️ **Page Object Model (POM)**: Standardized structure for UI testing using a robust `BasePage`.
+- 🛠️ **Dedicated CLI Tool (`qa-hub`)**: Simplified test execution with environmental and tag overrides.
+- 🪵 **Contextual Logger**: Professional, colorized logs with automatic Feature/Scenario context.
+- 🛡️ **Security Sanity Checks**: Built-in steps for API header hygiene and cookie security validation.
 - 🎭 **Dual-Driver Engine**: Native support for both **Selenium** and **Playwright**, switchable via configuration.
-- 🎨 **Visual Regression Engine**: RMS-based image comparison with configurable tolerance and automated baseline management.
-- ⚙️ **Surgical Lifecycle Management**: Advanced driver reuse logic (Global, Feature, or Scenario level) to optimize execution speed.
-- **Gherkin-First**: Focused on readable and maintainable test scenarios with professional syntax.
-- **Remote-Ready**: Easily installable via Git for CI/CD pipelines.
-- 🐳 **Pipeline Ready**: Optimized for CI/CD environments with headless support and automated driver management.
-- 🛠️ **Utility Suite**: Built-in element factory and common steps to reduce boilerplate code.
+- 🎨 **Visual Regression Engine**: RMS-based image comparison with automated baseline management.
+- ⚙️ **Surgical Lifecycle Management**: Advanced driver reuse logic to optimize execution speed.
+- 🧪 **CI/CD Ready**: Seamless integration with GitHub Actions and detailed audit logs.
 
 ---
 
@@ -61,21 +61,16 @@ Then install dependencies:
 
 ```bash
 pip install -r requirements.txt
+# Verify the CLI tool
+qa-hub --help
 ```
 
-### 2. Basic Usage
+### 2. Basic Execution
+Run your tests using the dedicated CLI tool:
 
-Inherit from `BasePage` to create your own page objects:
-
-```python
-from qa_framework.core.base_page import BasePage
-from selenium.webdriver.common.by import By
-
-class LoginPage(BasePage):
-    USERNAME_INPUT = (By.ID, "username")
-    
-    def login(self, username):
-        self.send_keys(self.USERNAME_INPUT, username)
+```bash
+# Run all smoke tests in staging
+qa-hub run --env staging --tags smoke
 ```
 
 ---
@@ -97,6 +92,50 @@ headless: true
 | `headless` | `True` | Run browser without GUI (ideal for CI) |
 | `window_width` | `1366` | Custom viewport width |
 | `window_height` | `768` | Custom viewport height |
+
+---
+
+## 🛠️ Command Line Interface (`qa-hub`)
+
+The framework provides a powerful CLI to manage your test runs efficiently.
+
+```bash
+qa-hub run [OPTIONS]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--env` | Set execution environment (local, dev, staging, prod) |
+| `--tags` | Filter by Gherkin tags (e.g., `@smoke`) |
+| `--browser` | Override browser (chrome, firefox, playwright) |
+| `--fail` | Stop execution on the first failure |
+| `--no-capture` | Show real-time logs and prints |
+
+For more details, see the [CLI Guide](./docs/cli.md).
+
+---
+
+## 🪵 Contextual Logging
+
+Every execution is enriched with a high-fidelity audit trail.
+
+- **Automatic Context**: Logs automatically include `[Feature | Scenario]` names.
+- **Colorized Output**: Visual differentiation between INFO, SUCCESS, WARNING, and ERROR.
+- **Timestamps**: Precision timing for every action.
+
+See [Logging Documentation](./docs/logging.md) for configuration and usage.
+
+---
+
+## 🛡️ Security Sanity Checks
+
+Validate your API security posture with built-in audit steps.
+
+- **Metadata Leaks**: Detect if your server leaks technology versions.
+- **Security Headers**: Verify presence of HSTS, CSP, and X-Frame-Options.
+- **Cookie Security**: Audit session cookies for Secure, HttpOnly, and SameSite flags.
+
+Check the [Security Guide](./docs/security.md) for implementation details.
 
 ---
 

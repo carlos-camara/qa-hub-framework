@@ -39,6 +39,11 @@ Standardized steps for REST API validation, supporting dynamic variables, comple
 - `Then I print the response JSON`: Pretty-prints the response body.
 - `Then I print the request headers`: Displays the sent headers for triage.
 
+### Security Sanity Checks
+- `Then the response should not leak server metadata`: Checks for version numbers in 'Server' and presence of 'X-Powered-By'.
+- `Then the response should contain mandatory security headers`: Validates HSTS, CSP, X-Frame-Options, and X-Content-Type-Options.
+- `Then all session cookies should be secure`: Audits cookies for Secure, HttpOnly, and SameSite (Lax/Strict) flags.
+
 ---
 
 ## 🖱️ GUI Testing (`gui_steps.py`)
