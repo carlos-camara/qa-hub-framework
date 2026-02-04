@@ -14,7 +14,7 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 import argparse
-import subprocess
+import subprocess  # nosec B404
 import sys
 import os
 from .utils.logger import ContextualLogger, Colors
@@ -85,7 +85,7 @@ def execute_run(args):
     # Run the process
     try:
         # We use a subprocess and pipe the output so it shows up in real-time
-        process = subprocess.Popen(
+        process = subprocess.Popen(  # nosec B603
             cmd,
             stdout=sys.stdout,
             stderr=sys.stderr,

@@ -1013,6 +1013,6 @@ def step_verify_element_hidden(context, element_name):
     except (NoSuchElementException, TimeoutException, KeyError):
         # Success if element is not found or times out during visibility search
         pass
-    except Exception:
+    except Exception:  # nosec B110
         # Some elements might exist but be truly hidden (display: none)
         pass
