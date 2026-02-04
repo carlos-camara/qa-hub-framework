@@ -1,16 +1,69 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           QA Hub Framework                                    ║
+║                     Visual Regression Testing Engine                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  This module provides pixel-based visual comparison capabilities for         ║
+║  detecting UI regressions, layout shifts, and CSS glitches.                  ║
+║                                                                              ║
+║  Features:                                                                    ║
+║  • Automatic baseline seeding (first run creates baselines)                  ║
+║  • RMS (Root Mean Square) error calculation for high fidelity                ║
+║  • Configurable tolerance thresholds for flexible matching                   ║
+║  • Baseline prefix support for environment-specific baselines                ║
+║  • Works identically with Selenium and Playwright backends                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
 import os
 import shutil
 from PIL import Image, ImageChops, ImageStat
 
+
 class VisualHandler:
     """
-    Handles visual testing operations: baseline management and image comparison.
+    Static utility class for visual regression testing operations.
+    
+    Handles baseline image management and pixel-perfect comparison using
+    the Pillow (PIL) library. Designed to integrate seamlessly with the
+    framework's step definitions and configuration system.
+    
+    Configuration (features/config/properties.cfg):
+        [VisualTests]
+        enabled = true           # Enable/disable visual testing
+        fail = true              # Fail tests on mismatch
+        save = false             # Overwrite baselines with current screenshots
+        baseline_name = desktop  # Prefix for baseline files (optional)
+    
+    Directory Structure:
+        features/
+        └── resources/
+            └── screenshots/
+                ├── baselines/           # Stored baseline images
+                │   ├── login_form.png
+                │   └── dashboard_header.png
+                └── *_latest.png         # Temporary current screenshots
+    
+    Usage:
+        # In step definitions (gui_steps.py handles this automatically)
+        similarity, is_match = VisualHandler.validate_visual(
+            context, 
+            "dashboard_header",  # baseline name
+            "/path/to/current.png",
+            threshold=5.0
+        )
     """
     
     @staticmethod
     def get_baseline_dir():
-        """Returns the directory where baseline images are stored."""
-        # Typically features/resources/screenshots/baselines
+        """
+        Get or create the baseline images directory.
+        
+        Returns:
+            str: Absolute path to features/resources/screenshots/baselines/
+            
+        Side Effects:
+            Creates the directory if it doesn't exist.
+        """
         base_path = os.path.join(os.getcwd(), 'features', 'resources', 'screenshots')
         baseline_dir = os.path.join(base_path, 'baselines')
         if not os.path.exists(baseline_dir):
@@ -19,7 +72,21 @@ class VisualHandler:
 
     @staticmethod
     def get_baseline_path(screenshot_name, baseline_prefix=None):
-        """Returns the full path for a baseline image."""
+        """
+        Construct the full path for a baseline image.
+        
+        Args:
+            screenshot_name: Base name for the screenshot (e.g., "login_form")
+            baseline_prefix: Optional prefix for environment-specific baselines
+                            (e.g., "desktop", "mobile", "dark_mode")
+        
+        Returns:
+            str: Full path like .../baselines/desktop_login_form.png
+            
+        Examples:
+            get_baseline_path("header") → .../baselines/header.png
+            get_baseline_path("header", "mobile") → .../baselines/mobile_header.png
+        """
         directory = VisualHandler.get_baseline_dir()
         filename = f"{screenshot_name}.png"
         if baseline_prefix:
@@ -29,22 +96,52 @@ class VisualHandler:
     @staticmethod
     def compare_images(current_path, baseline_path, threshold=0.0):
         """
-        Compare two images and return (similarity_percentage, is_match).
-        Similarity is 0-100%. threshold is allowed difference percentage (0-100%).
+        Compare two images and calculate their similarity.
+        
+        Uses RMS (Root Mean Square) error calculation across RGB channels
+        for high-fidelity difference detection. This method detects:
+        - Color differences
+        - Layout shifts
+        - Missing/extra elements
+        - Font rendering changes
+        - Anti-aliasing variations
+        
+        Algorithm:
+            1. Load both images and convert to RGB
+            2. Resize current to match baseline if sizes differ
+            3. Calculate pixel-by-pixel difference
+            4. Compute RMS error: sum(channel_rms) / (3 * 255)
+            5. Convert to percentage: error * 100
+        
+        Args:
+            current_path: Path to the current (latest) screenshot
+            baseline_path: Path to the expected baseline image
+            threshold: Maximum allowed error percentage (0.0 = pixel-perfect)
+            
+        Returns:
+            tuple: (similarity_percentage, is_match)
+                - similarity_percentage: 0-100 where 100 is identical
+                - is_match: True if error <= threshold
+                
+        Example:
+            similarity, match = compare_images("current.png", "baseline.png", 5.0)
+            # similarity: 98.5 (98.5% similar)
+            # match: True (error 1.5% <= threshold 5.0%)
         """
+        # Load and normalize images to RGB
         img_current = Image.open(current_path).convert('RGB')
         img_baseline = Image.open(baseline_path).convert('RGB')
 
-        # Sizes must match for pixel-by-pixel comparison
+        # Handle size mismatches (viewport differences, responsive layouts)
         if img_current.size != img_baseline.size:
-            # Resize current to match baseline for comparison if they differ
             img_current = img_current.resize(img_baseline.size, Image.Resampling.LANCZOS)
 
+        # Calculate pixel difference
         diff = ImageChops.difference(img_current, img_baseline)
         stat = ImageStat.Stat(diff)
         
-        # Calculate RMS (Root Mean Square) error across R, G, B channels
-        # Sum of RMS divided by (3 channels * 255 max value) gives normalized error (0.0 to 1.0)
+        # RMS error: normalized to 0.0-1.0 range
+        # stat.rms gives [R_rms, G_rms, B_rms] where each is 0-255
         rms = sum(stat.rms) / (3.0 * 255.0)
         
         error_percentage = rms * 100.0
@@ -56,10 +153,46 @@ class VisualHandler:
     @staticmethod
     def validate_visual(context, screenshot_name, current_path, threshold=0.0):
         """
-        High-level validation logic integrated with framework context.
+        High-level visual validation integrated with framework configuration.
+        
+        This is the main entry point called by step definitions. It handles:
+        - Reading visual configuration from context
+        - Baseline seeding (auto-create if missing)
+        - Baseline updating (when save=true)
+        - Image comparison with threshold
+        - Logging results
+        
+        Workflow:
+            1. Check if visual testing is enabled
+            2. If baseline missing OR save=true: seed/update baseline
+            3. Otherwise: compare current vs baseline
+            4. Log result and return match status
+        
+        Args:
+            context: Behave context with optional visual_config dict
+            screenshot_name: Base name for the screenshot (e.g., "dashboard")
+            current_path: Path to the current screenshot to validate
+            threshold: Allowed error percentage (0.0 = pixel-perfect)
+            
+        Returns:
+            tuple: (similarity_percentage, is_match)
+            
+        Configuration (context.visual_config):
+            {
+                'enabled': True,      # Skip validation if False
+                'save': False,        # Overwrite baselines if True
+                'fail': True,         # Fail tests on mismatch if True
+                'baseline_name': None # Optional prefix for baselines
+            }
+            
+        Console Output:
+            ✅ Match: "[Visual] ✅ Match for 'header': Similarity=100.00%"
+            ❌ Mismatch: "[Visual] ❌ Visual mismatch for 'header': Similarity=95.00%"
+            📸 Seeding: "[Visual] Seeding baseline: .../baselines/header.png"
         """
         visual_config = getattr(context, 'visual_config', {})
         
+        # Check if visual testing is enabled
         if not visual_config.get('enabled', True):
             print(f"[Visual] Skipping visual validation for '{screenshot_name}' (Disabled in config)")
             return 100.0, True
@@ -69,22 +202,24 @@ class VisualHandler:
         
         baseline_path = VisualHandler.get_baseline_path(screenshot_name, baseline_prefix)
         
-        # 1. Check if baseline exists or if we are in 'save' mode (seeding/overwriting)
+        # ─────────────────────────────────────────────────────────────────────
+        # BASELINE SEEDING / UPDATE
+        # ─────────────────────────────────────────────────────────────────────
         if not os.path.exists(baseline_path) or save_mode:
-            print(f"[Visual] {'Seeding' if not os.path.exists(baseline_path) else 'Updating'} baseline: {baseline_path}")
+            action = "Seeding" if not os.path.exists(baseline_path) else "Updating"
+            print(f"[Visual] {action} baseline: {baseline_path}")
             shutil.copy(current_path, baseline_path)
             return 100.0, True
 
-        # 2. Perform comparison
+        # ─────────────────────────────────────────────────────────────────────
+        # IMAGE COMPARISON
+        # ─────────────────────────────────────────────────────────────────────
         similarity, is_match = VisualHandler.compare_images(current_path, baseline_path, threshold)
         
-        # 3. Handle results
+        # Log result
         if not is_match:
             error_msg = f"Visual mismatch for '{screenshot_name}': Similarity={similarity:.2f}%, Allowed Error={threshold}%"
             print(f"[Visual] ❌ {error_msg}")
-            
-            # Create a simplified diff image for visual inspection in reports later?
-            # For now, just return the result.
         else:
             print(f"[Visual] ✅ Match for '{screenshot_name}': Similarity={similarity:.2f}%")
             
