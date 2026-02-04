@@ -376,6 +376,20 @@ def step_take_element_screenshot(context, element_description, screenshot_name):
     """
     step_take_screenshot(context, screenshot_name)
 
+@then('the visual appearance of the "{description}" {target_type:w} named "{name}" should match its baseline')
+def step_visual_match_professional(context, description, target_type, name):
+    """
+    Professional visual match with 0% threshold.
+    """
+    step_visual_match_with_threshold(context, description, name, 0.0)
+
+@then('the visual appearance of the "{description}" {target_type:w} named "{name}" should match its baseline with a {threshold:f}% tolerance')
+def step_visual_match_professional_with_threshold(context, description, target_type, name, threshold):
+    """
+    Professional visual comparison with a percentage tolerance.
+    """
+    step_visual_match_with_threshold(context, description, name, threshold)
+
 @then('the visual of the "{element_description}" named "{screenshot_name}" should match')
 def step_visual_match(context, element_description, screenshot_name):
     """
@@ -400,7 +414,6 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
     similarity, is_match = VisualHandler.validate_visual(context, screenshot_name, current_path, threshold)
     
     # 3. Handle failure
-    # The configuration 'fail' determines if we raise an exception
     visual_config = getattr(context, 'visual_config', {})
     should_fail = visual_config.get('fail', False)
     
