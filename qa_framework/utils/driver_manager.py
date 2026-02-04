@@ -10,12 +10,28 @@ class DriverManager:
     """Handles automatic downloading and unzipping of browser drivers."""
     
     DRIVERS_DIR = os.path.join(os.getcwd(), 'features', 'drivers')
-    
-    # Placeholder URLs - In a real scenario, these would resolve to the latest stable versions
-    # For this implementation, we use direct links for common versions as an example
-    CHROME_DRIVER_URL = "https://storage.googleapis.com/chrome-for-testing-public/122.0.6261.94/win64/chromedriver-win64.zip"
     GECKO_DRIVER_URL = "https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-win64.zip"
     EDGE_DRIVER_URL = "https://msedgedriver.azureedge.net/122.0.2365.59/edgedriver_win64.zip"
+    
+    @classmethod
+    def get_chrome_download_url(cls):
+        """Fetch the latest stable chromedriver URL for win64."""
+        versions_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
+        try:
+            response = requests.get(versions_url, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                # Get stable version downloads
+                downloads = data.get('channels', {}).get('Stable', {}).get('downloads', {}).get('chromedriver', [])
+                for download in downloads:
+                    if download.get('platform') == 'win64':
+                        return download.get('url')
+        except Exception as e:
+            # Important: show full exception name for diagnostics
+            print(f"[DriverManager] Error fetching Chrome versions ({type(e).__name__}): {e}")
+        
+        # Fallback to 133 (current stable) if API fails to avoid the 122 mismatch
+        return "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/win64/chromedriver-win64.zip"
 
     @classmethod
     def ensure_driver(cls, browser_type):
@@ -34,13 +50,17 @@ class DriverManager:
         local_path = os.path.join(cls.DRIVERS_DIR, executable_name)
         
         # Check if already exists in features/drivers
+        # To handle version mismatches, users should delete the drivers folder
         if os.path.exists(local_path):
             return local_path
 
         # If not, download and unzip
-        url = cls.CHROME_DRIVER_URL if browser_type == "chrome" else \
-              cls.GECKO_DRIVER_URL if browser_type == "firefox" else \
-              cls.EDGE_DRIVER_URL
+        if browser_type == "chrome":
+            url = cls.get_chrome_download_url()
+        elif browser_type == "firefox":
+            url = cls.GECKO_DRIVER_URL
+        else:
+            url = cls.EDGE_DRIVER_URL
         
         print(f"[DriverManager] Downloading {browser_type} driver from {url}...")
         response = requests.get(url)
@@ -56,7 +76,7 @@ class DriverManager:
                             target.write(source.read())
                         break
             
-            # Set executable permissions (especially for non-windows, but good practice)
+            # Set executable permissions
             st = os.stat(local_path)
             os.chmod(local_path, st.st_mode | stat.S_IEXEC)
             
