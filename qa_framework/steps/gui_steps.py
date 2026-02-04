@@ -296,7 +296,7 @@ def step_set_current_page(context, page_name):
             if isinstance(config, dict) and config.get('wait_load') is True:
                 try:
                     element = get_element_from_page_object(context, element_name, page_name)
-                    element.wait_until_visible(timeout=5)
+                    element.wait_until_visible(timeout=10)
                 except Exception as e:
                     raise AssertionError(
                         f"Page Load Failed: Critical element '{element_name}' with wait_load: true "
