@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from ..core.language_handler import LanguageHandler
 from ..core.variable_handler import VariableHandler
-from .driver import get_driver
+from .driver import get_driver, get_config, resolve_config_variable
 
 class FrameworkHooks:
     @staticmethod
@@ -28,7 +28,24 @@ class FrameworkHooks:
             }
         context.variables = VariableHandler(config=dataset_config)
         
-        # 4. Screenshot metadata
+        # 4. Visual Testing Config
+        config = get_config()
+        visual_config = {}
+        if config.has_section('VisualTests'):
+            for option in config.options('VisualTests'):
+                raw_value = config.get('VisualTests', option)
+                # Resolve dynamic variables like {Driver_type}
+                resolved_value = resolve_config_variable(config, raw_value)
+                
+                # Handle booleans
+                if resolved_value.lower() in ['true', 'false']:
+                    visual_config[option] = resolved_value.lower() == 'true'
+                else:
+                    visual_config[option] = resolved_value
+        
+        context.visual_config = visual_config
+        
+        # 5. Screenshot metadata
         context.screenshots = []
         context.run_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         

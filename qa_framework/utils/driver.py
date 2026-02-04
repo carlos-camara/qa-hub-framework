@@ -9,6 +9,27 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from .driver_manager import DriverManager
 
+import re
+
+def resolve_config_variable(config, value):
+    """
+    Resolves patterns like {Section_Option} in a string using values from the config.
+    Example: {Driver_type} -> 'chrome'
+    """
+    if not isinstance(value, str):
+        return value
+        
+    pattern = r'\{(\w+)_(\w+)\}'
+    
+    def replacer(match):
+        section = match.group(1)
+        option = match.group(2)
+        if config.has_section(section) and config.has_option(section, option):
+            return config.get(section, option)
+        return match.group(0) # Return original if not found
+        
+    return re.sub(pattern, replacer, value)
+
 def get_config():
     """Reads configuration from features/config/properties.cfg if it exists."""
     config = configparser.ConfigParser()
