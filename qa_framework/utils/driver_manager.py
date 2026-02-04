@@ -37,33 +37,23 @@ class DriverManager:
 
     @classmethod
     def get_chrome_download_url(cls):
-        """Fetch the latest chromedriver URL for the detected platform, checking multiple channels."""
+        """Fetch the latest stable chromedriver URL for the detected platform."""
         target_platform = cls.get_platform()
         versions_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
-        
         try:
             response = requests.get(versions_url, timeout=10)
             if response.status_code == 200:
                 data = response.json()
-                channels = data.get('channels', {})
-                
-                # We check channels in order of freshness to find the most capable version
-                # Usually Stable is enough, but some users have Dev browsers
-                for channel_name in ['Canary', 'Dev', 'Beta', 'Stable']:
-                    channel_data = channels.get(channel_name)
-                    if not channel_data:
-                        continue
-                        
-                    downloads = channel_data.get('downloads', {}).get('chromedriver', [])
-                    for download in downloads:
-                        if download.get('platform') == target_platform:
-                            print(f"[DriverManager] Found version {channel_data.get('version')} in {channel_name} channel")
-                            return download.get('url')
-                            
+                # Get stable version downloads
+                downloads = data.get('channels', {}).get('Stable', {}).get('downloads', {}).get('chromedriver', [])
+                for download in downloads:
+                    if download.get('platform') == target_platform:
+                        return download.get('url')
         except Exception as e:
+            # Important: show full exception name for diagnostics
             print(f"[DriverManager] Error fetching Chrome versions ({type(e).__name__}): {e}")
         
-        # Fallback
+        # Fallback to 133 (current stable)
         if target_platform == "linux64":
             return "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/linux64/chromedriver-linux64.zip"
         return "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/win64/chromedriver-win64.zip"

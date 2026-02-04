@@ -1,5 +1,8 @@
-behave==1.2.6
-selenium==4.19.0
-requests==2.32.3
-PyYAML==6.0.1
-pypdf==6.6.2
+behave>=1.2.6
+selenium>=4.19.0
+requests>=2.31.0
+PyYAML>=6.0.1
+pypdf>=6.6.2
+Pillow>=10.3.0
+playwright>=1.42.0
+behave-html-formatter>=0.5.1
