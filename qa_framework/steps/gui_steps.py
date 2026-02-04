@@ -376,17 +376,19 @@ def step_take_element_screenshot(context, element_description, screenshot_name):
     """
     step_take_screenshot(context, screenshot_name)
 
-@then('the visual appearance of the "{description}" {target_type:w} named "{name}" should match its baseline')
-def step_visual_match_professional(context, description, target_type, name):
+@then('the "{description}" {target_type:w} should visually match the baseline image "{name}"')
+def step_visual_match_explicit(context, description, target_type, name):
     """
-    Professional visual match with 0% threshold.
+    Explicit visual/image match with 0% threshold.
+    Example: Then the "header" element should visually match the baseline image "header_base"
     """
     step_visual_match_with_threshold(context, description, name, 0.0)
 
-@then('the visual appearance of the "{description}" {target_type:w} named "{name}" should match its baseline with a {threshold:f}% tolerance')
-def step_visual_match_professional_with_threshold(context, description, target_type, name, threshold):
+@then('the "{description}" {target_type:w} should visually match the baseline image "{name}" with a {threshold:f}% tolerance')
+def step_visual_match_explicit_with_threshold(context, description, target_type, name, threshold):
     """
-    Professional visual comparison with a percentage tolerance.
+    Explicit visual/image comparison with a percentage tolerance.
+    Example: Then the "charts" page should visually match the baseline image "dashboard_charts" with a 5.0% tolerance
     """
     step_visual_match_with_threshold(context, description, name, threshold)
 
