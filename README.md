@@ -14,6 +14,7 @@ A **premium, reusable automated testing framework** designed to streamline test 
 - 🏗️ **Page Object Model (POM)**: Standardized structure for UI testing using a robust `BasePage`.
 - 🎭 **Dual-Driver Engine**: Native support for both **Selenium** and **Playwright**, switchable via configuration.
 - 🎨 **Visual Regression Engine**: RMS-based image comparison with configurable tolerance and automated baseline management.
+- ⚙️ **Surgical Lifecycle Management**: Advanced driver reuse logic (Global, Feature, or Scenario level) to optimize execution speed.
 - **Gherkin-First**: Focused on readable and maintainable test scenarios with professional syntax.
 - **Remote-Ready**: Easily installable via Git for CI/CD pipelines.
 - 🐳 **Pipeline Ready**: Optimized for CI/CD environments with headless support and automated driver management.

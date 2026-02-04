@@ -60,6 +60,17 @@ Steps for web UI interaction and validation, including robust waits and visual c
 - `Then the "{description}" element should visually match the baseline image "{name}"`: Pixel-perfect match (0% tolerance).
 - `Then the "{description}" page should visually match the baseline image "{name}" with a {threshold:f}% tolerance`: Configurable layout shift protection.
 
+---
+
+## 🏷️ Framework Tags
+
+The framework supports specialized Behave tags to control driver lifecycle:
+
+- `@reuse_driver`: Apply to a `Feature` to share a single browser session across all its scenarios.
+- `@reset_driver`: Apply to a `Scenario` to force a browser restart, even if reuse is enabled globally.
+
+---
+
 ### Visual Captures
 - `Then I take a screenshot named "{screenshot_name}"`: Standard screenshot with HTML embedding support.
 

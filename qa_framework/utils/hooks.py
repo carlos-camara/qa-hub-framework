@@ -8,17 +8,29 @@ class FrameworkHooks:
     @staticmethod
     def bootstrap(context, lang_dir=None, default_lang="en", dataset_config=None):
         """
-        Initializes the core framework components (Driver, I18n, Variables).
+        Initializes core framework components (I18n, Variables, Config).
+        Driver initialization is now deferred to before_scenario/before_feature
+        depending on configuration.
         """
-        # 1. Driver
-        headless = os.getenv("HEADLESS", "true").lower() == "true"
-        context.driver = get_driver(headless=headless)
+        # 1. Configuration
+        config = get_config()
+        context.config_obj = config # Store for later use
         
-        # 2. I18n
+        # 2. Driver Config
+        driver_config = {}
+        if config.has_section('Driver'):
+            driver_config = {
+                'reuse_driver': config.getboolean('Driver', 'reuse_driver', fallback=False),
+                'reuse_driver_session': config.getboolean('Driver', 'reuse_driver_session', fallback=False),
+                'restart_driver_after_failure': config.getboolean('Driver', 'restart_driver_after_failure', fallback=True),
+            }
+        context.driver_config = driver_config
+
+        # 3. I18n
         if lang_dir and os.path.exists(lang_dir):
             context.i18n = LanguageHandler(lang_dir, default_lang=default_lang)
         
-        # 3. Variables
+        # 4. Variables
         if not dataset_config:
             dataset_config = {
                 "dataset": {
@@ -28,39 +40,104 @@ class FrameworkHooks:
             }
         context.variables = VariableHandler(config=dataset_config)
         
-        # 4. Visual Testing Config
-        config = get_config()
+        # 5. Visual Testing Config
         visual_config = {}
         if config.has_section('VisualTests'):
             for option in config.options('VisualTests'):
                 raw_value = config.get('VisualTests', option)
-                # Resolve dynamic variables like {Driver_type}
                 resolved_value = resolve_config_variable(config, raw_value)
-                
-                # Handle booleans
                 if resolved_value.lower() in ['true', 'false']:
                     visual_config[option] = resolved_value.lower() == 'true'
                 else:
                     visual_config[option] = resolved_value
-        
         context.visual_config = visual_config
         
-        # 5. Screenshot metadata
+        # 6. Metadata
         context.screenshots = []
         context.run_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    @staticmethod
+    def before_scenario(context, scenario):
+        """
+        Handles driver initialization per scenario basis, respecting reuse settings.
+        """
+        driver_config = getattr(context, 'driver_config', {})
+        reuse_session = driver_config.get('reuse_driver_session', False)
+        reuse_feature = driver_config.get('reuse_driver', False) or 'reuse_driver' in scenario.feature.tags
         
+        force_reset = 'reset_driver' in scenario.tags
+        
+        should_init = False
+        
+        if not hasattr(context, 'driver') or context.driver is None:
+            should_init = True
+        elif force_reset:
+            print(f"[FRAMEWORK] @reset_driver tag detected. Restarting browser for scenario: {scenario.name}")
+            FrameworkHooks.teardown_driver(context)
+            should_init = True
+            
+        if should_init:
+            headless = os.getenv("HEADLESS", "true").lower() == "true"
+            context.driver = get_driver(headless=headless)
+
+    @staticmethod
+    def after_scenario(context, scenario, step_failure_dir=None):
+        """
+        Handles driver teardown or failure recovery.
+        """
+        driver_config = getattr(context, 'driver_config', {})
+        reuse_session = driver_config.get('reuse_driver_session', False)
+        reuse_feature = driver_config.get('reuse_driver', False) or 'reuse_driver' in scenario.feature.tags
+        restart_on_failure = driver_config.get('restart_driver_after_failure', True)
+        
+        failed = scenario.status == "failed"
+        
+        # Capture screenshots on failure if dir provided
+        if failed and step_failure_dir:
+            # Note: Step failures are usually handled in after_step, 
+            # but we can do a final sanity check here.
+            pass
+
+        # Decide if we should close the driver now
+        # If we failed and restart_on_failure is true, we always close it to ensure fresh start
+        if failed and restart_on_failure:
+            print(f"[FRAMEWORK] Scenario failed. Restarting driver for next test.")
+            FrameworkHooks.teardown_driver(context)
+        elif not reuse_session and not reuse_feature:
+            # Case: Standard isolation (per scenario)
+            FrameworkHooks.teardown_driver(context)
+
+    @staticmethod
+    def after_feature(context, feature):
+        """Standard teardown after feature completion."""
+        driver_config = getattr(context, 'driver_config', {})
+        reuse_session = driver_config.get('reuse_driver_session', False)
+        reuse_feature = driver_config.get('reuse_driver', False) or 'reuse_driver' in feature.tags
+
+        if reuse_feature and not reuse_session:
+            FrameworkHooks.teardown_driver(context)
+
+    @staticmethod
+    def teardown_driver(context):
+        """Safely shuts down the driver instance."""
+        if hasattr(context, "driver") and context.driver:
+            try:
+                context.driver.quit()
+            except Exception as e:
+                print(f"[FRAMEWORK] Error during driver quit: {e}")
+            finally:
+                context.driver = None
+
     @staticmethod
     def handle_step_failure(context, step, screenshots_base_dir):
         """
         Common logic to capture failure screenshots.
         """
-        if step.status == "failed" and hasattr(context, 'driver'):
-            # Create timestamped failure dir if it doesn't exist
+        if step.status == "failed" and hasattr(context, 'driver') and context.driver:
             failure_dir = os.path.join(screenshots_base_dir, context.run_timestamp)
             if not os.path.exists(failure_dir):
                 os.makedirs(failure_dir)
             
-            # Clean names for filesystem
             scenario_name = context.scenario.name.replace(" ", "_").replace("/", "_")
             step_name = step.name.replace(" ", "_").replace("/", "_")[:30]
             
@@ -69,27 +146,21 @@ class FrameworkHooks:
             
             try:
                 context.driver.save_screenshot(filepath)
-                
-                # Support Behave's embedding if available
                 if hasattr(context, 'embed'):
                     import base64
                     with open(filepath, 'rb') as img:
                         data = base64.b64encode(img.read()).decode('utf-8')
                     context.embed('image/png', data, caption=f"Failure: {step.name}")
                 
-                # Log to stdout for HTML formatters or consoles
                 abspath = os.path.abspath(filepath).replace('\\', '/')
-                print(f"\n[FAILURE] Screenshot: file:///{abspath}")
-                
+                print(f"[FAILURE] Screenshot: file:///{abspath}")
                 context.screenshots.append(filepath)
             except Exception as e:
                 print(f"Error capturing failure screenshot: {e}")
 
     @staticmethod
     def teardown(context):
-        """Standard teardown logic"""
-        if hasattr(context, "driver") and context.driver:
-            context.driver.quit()
-        
+        """Final project-level teardown."""
+        FrameworkHooks.teardown_driver(context)
         if hasattr(context, 'screenshots') and context.screenshots:
              print(f"\n[FRAMEWORK] Screenshots captured: {len(context.screenshots)}")
