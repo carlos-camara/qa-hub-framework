@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 import time
 from ..core.language_handler import LanguageHandler
+from ..utils.visual import VisualHandler
 
 def resolve_tokens(context, text):
     """
@@ -374,3 +375,37 @@ def step_take_element_screenshot(context, element_description, screenshot_name):
     Currently a proxy for full page screenshot, but standardized in the framework.
     """
     step_take_screenshot(context, screenshot_name)
+
+@then('the visual of the "{element_description}" named "{screenshot_name}" should match')
+def step_visual_match(context, element_description, screenshot_name):
+    """
+    Standard visual match with 0% threshold.
+    """
+    step_visual_match_with_threshold(context, element_description, screenshot_name, 0.0)
+
+@then('the visual of the "{element_description}" named "{screenshot_name}" should match with a threshold of {threshold:f}%')
+def step_visual_match_with_threshold(context, element_description, screenshot_name, threshold):
+    """
+    Visual comparison with a percentage threshold for differences.
+    """
+    # 1. Take a temporary screenshot for comparison
+    ss_dir = os.path.join(os.getcwd(), 'features', 'resources', 'screenshots')
+    if not os.path.exists(ss_dir):
+        os.makedirs(ss_dir)
+        
+    current_path = os.path.join(ss_dir, f"{screenshot_name}_latest.png")
+    context.driver.save_screenshot(current_path)
+    
+    # 2. Validate against baseline
+    similarity, is_match = VisualHandler.validate_visual(context, screenshot_name, current_path, threshold)
+    
+    # 3. Handle failure
+    # The configuration 'fail' determines if we raise an exception
+    visual_config = getattr(context, 'visual_config', {})
+    should_fail = visual_config.get('fail', False)
+    
+    if not is_match and should_fail:
+        raise AssertionError(
+            f"Visual validation failed for '{screenshot_name}'. "
+            f"Similarity: {similarity:.2f}%. Allowed error threshold: {threshold}%."
+        )
