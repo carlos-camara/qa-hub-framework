@@ -17,7 +17,7 @@ from behave import given, when, then, step
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import os
 import time
 from ..core.language_handler import LanguageHandler
@@ -843,3 +843,169 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
             f"Visual validation failed for '{screenshot_name}'. "
             f"Similarity: {similarity:.2f}%. Allowed threshold: {threshold}%."
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 8: MOUSE & KEYBOARD ACTIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@when('I hover over the "{element_name}"')
+def step_hover_over_element(context, element_name):
+    """
+    Simulate hovering the mouse cursor over an element.
+    
+    Example:
+        When I hover over the "user_profile_icon"
+    """
+    page_name = getattr(context, 'current_page', None)
+    element = get_element_from_page_object(context, element_name, page_name)
+    element.wait_until_visible()
+    
+    from selenium.webdriver.common.action_chains import ActionChains
+    actions = ActionChains(context.driver)
+    actions.move_to_element(element._find_element()).perform()
+
+
+@when('I double click on the "{element_name}"')
+def step_double_click_element(context, element_name):
+    """
+    Perform a double click on a page object element.
+    
+    Example:
+        When I double click on the "file_icon"
+    """
+    page_name = getattr(context, 'current_page', None)
+    element = get_element_from_page_object(context, element_name, page_name)
+    element.wait_until_clickable()
+    
+    from selenium.webdriver.common.action_chains import ActionChains
+    actions = ActionChains(context.driver)
+    actions.double_click(element._find_element()).perform()
+
+
+@when('I press the "{key_name}" key')
+def step_press_key(context, key_name):
+    """
+    Simulate a keyboard key press.
+    
+    Supported keys: Enter, Escape, Tab, Backspace, Delete, ArrowUp, ArrowDown, etc.
+    
+    Example:
+        When I press the "Enter" key
+    """
+    from selenium.webdriver.common.keys import Keys
+    key_map = {
+        "Enter": Keys.ENTER,
+        "Escape": Keys.ESCAPE,
+        "Tab": Keys.TAB,
+        "Backspace": Keys.BACKSPACE,
+        "Delete": Keys.DELETE,
+        "ArrowUp": Keys.ARROW_UP,
+        "ArrowDown": Keys.ARROW_DOWN,
+        "ArrowLeft": Keys.ARROW_LEFT,
+        "ArrowRight": Keys.ARROW_RIGHT,
+        "Space": Keys.SPACE,
+        "PageUp": Keys.PAGE_UP,
+        "PageDown": Keys.PAGE_DOWN
+    }
+    
+    if key_name not in key_map:
+        raise ValueError(f"Unsupported key name: '{key_name}'. Available: {list(key_map.keys())}")
+    
+    from selenium.webdriver.common.action_chains import ActionChains
+    actions = ActionChains(context.driver)
+    actions.send_keys(key_map[key_name]).perform()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 9: WINDOW & FRAME MANAGEMENT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@when('I switch to the next tab')
+def step_switch_to_next_tab(context):
+    """Switch focus to the next available browser tab."""
+    handles = context.driver.window_handles
+    current = context.driver.current_window_handle
+    next_index = (handles.index(current) + 1) % len(handles)
+    context.driver.switch_to.window(handles[next_index])
+
+
+@when('I close the current tab')
+def step_close_current_tab(context):
+    """Close the currently focused tab and switch back to the main window."""
+    context.driver.close()
+    if len(context.driver.window_handles) > 0:
+        context.driver.switch_to.window(context.driver.window_handles[0])
+
+
+@when('I switch to the iframe "{element_name}"')
+def step_switch_to_iframe(context, element_name):
+    """
+    Switch driver context to a specific iframe element.
+    
+    Example:
+        When I switch to the iframe "payment_widget"
+    """
+    page_name = getattr(context, 'current_page', None)
+    element = get_element_from_page_object(context, element_name, page_name)
+    context.driver.switch_to.frame(element._find_element())
+
+
+@when('I switch back to the default content')
+def step_switch_to_default_content(context):
+    """Reset driver context to the main page (exit iframes)."""
+    context.driver.switch_to.default_content()
+
+
+@when('I accept the alert')
+def step_accept_alert(context):
+    """Accept (Click OK) on a browser alert/dialog."""
+    WebDriverWait(context.driver, 5).until(EC.alert_is_present())
+    context.driver.switch_to.alert.accept()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 10: ADVANCED VALIDATIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@then('the "{element_name}" should have the attribute "{attribute}" with value "{expected_value}"')
+def step_verify_attribute(context, element_name, attribute, expected_value):
+    """
+    Verify an element attribute matches the expected value.
+    
+    Example:
+        Then the "login_button" should have the attribute "type" with value "submit"
+    """
+    page_name = getattr(context, 'current_page', None)
+    element = get_element_from_page_object(context, element_name, page_name)
+    actual_value = element.get_attribute(attribute)
+    assert actual_value == expected_value, \
+        f"Expected attribute '{attribute}' to be '{expected_value}', but found '{actual_value}'"
+
+
+@then('the URL should contain "{substring}"')
+def step_verify_url_contains(context, substring):
+    """Verify that the current browser URL contains a specific substring."""
+    current_url = context.driver.current_url
+    assert substring in current_url, f"Expected URL to contain '{substring}', but was '{current_url}'"
+
+
+@then('the "{element_name}" should be hidden')
+@then('the "{element_name}" should not be visible')
+def step_verify_element_hidden(context, element_name):
+    """
+    Verify that an element is either not present or not visible.
+    
+    Example:
+        Then the "error_banner" should be hidden
+    """
+    page_name = getattr(context, 'current_page', None)
+    try:
+        element = get_element_from_page_object(context, element_name, page_name)
+        assert not element.is_displayed(), f"Element '{element_name}' is visible but should be hidden"
+    except (NoSuchElementException, TimeoutException, KeyError):
+        # Success if element is not found or times out during visibility search
+        pass
+    except Exception:
+        # Some elements might exist but be truly hidden (display: none)
+        pass

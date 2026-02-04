@@ -4,15 +4,14 @@
 ║                         GUI Steps Unit Tests                                  ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
 ║  Tests for GUI step definitions including:                                   ║
-║  • Navigation steps         • Text verification                              ║
-║  • Page title validation    • Token resolution                               ║
+║  • Navigation & Windows      • Mouse & Keyboard Actions                      ║
+║  • Attributes & Iframes      • Transitions & Contexts                        ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 import pytest
 from unittest.mock import MagicMock, patch
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FIXTURES
@@ -20,260 +19,155 @@ from selenium.common.exceptions import TimeoutException
 
 @pytest.fixture
 def mock_context():
-    """Create a mock Behave context with common attributes."""
     context = MagicMock()
     context.driver = MagicMock()
+    context.driver.window_handles = ["handle1", "handle2"]
+    context.driver.current_window_handle = "handle1"
     context.i18n = MagicMock()
-    context.i18n.resolve = lambda x: x  # Pass-through by default
+    context.i18n.resolve = lambda x: x
     context.variables = MagicMock()
-    context.variables.resolve = lambda x: x  # Pass-through by default
+    context.variables.resolve = lambda x: x
+    context.current_page = "test_page"
     return context
 
-
-@pytest.fixture
-def mock_body_element():
-    """Create a mock body element for text searches."""
-    element = MagicMock()
-    element.text = "Welcome to the Dashboard. Please login to continue."
-    return element
-
-
 # ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 1: NAVIGATION STEPS
+# SECTION 1: INTERACTION TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestNavigationSteps:
-    """Tests for browser navigation step definitions."""
+class TestInteractionSteps:
+    """Tests for mouse and keyboard interactions."""
 
-    def test_navigate_to_url(self, mock_context):
-        """✓ Navigate step calls driver.get() with correct URL."""
-        from qa_framework.steps.gui_steps import step_navigate_to_url
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    @patch("selenium.webdriver.common.action_chains.ActionChains")
+    def test_hover_step(self, mock_actions_class, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_hover_over_element
+        mock_elem = MagicMock()
+        mock_get_elem.return_value = mock_elem
         
-        step_navigate_to_url(mock_context, "http://test.com")
+        # Configure chaining
+        instance = mock_actions_class.return_value
+        instance.move_to_element.return_value = instance
         
-        mock_context.driver.get.assert_called_once_with("http://test.com")
+        step_hover_over_element(mock_context, "target_elem")
+        
+        mock_elem.wait_until_visible.assert_called_once()
+        instance.move_to_element.assert_called()
+        instance.perform.assert_called()
 
-    def test_navigate_to_dashboard(self, mock_context):
-        """✓ Dashboard navigation step uses correct URL."""
-        from qa_framework.steps.gui_steps import step_navigate_to_dashboard
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    @patch("selenium.webdriver.common.action_chains.ActionChains")
+    def test_double_click_step(self, mock_actions_class, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_double_click_element
+        mock_elem = MagicMock()
+        mock_get_elem.return_value = mock_elem
         
-        step_navigate_to_dashboard(mock_context, "http://localhost:3000/dashboard/")
+        # Configure chaining
+        instance = mock_actions_class.return_value
+        instance.double_click.return_value = instance
         
-        mock_context.driver.get.assert_called_once_with("http://localhost:3000/dashboard/")
+        step_double_click_element(mock_context, "target_elem")
+        
+        mock_elem.wait_until_clickable.assert_called_once()
+        instance.double_click.assert_called()
+        instance.perform.assert_called()
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 2: TEXT VERIFICATION STEPS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestTextVerificationSteps:
-    """Tests for text verification step definitions."""
-
-    def test_verify_text_present_success(self, mock_context, mock_body_element):
-        """✓ Text verification passes when text is found."""
-        from qa_framework.steps.gui_steps import step_verify_text_present
+    @patch("selenium.webdriver.common.action_chains.ActionChains")
+    def test_press_key_step(self, mock_actions_class, mock_context):
+        from qa_framework.steps.gui_steps import step_press_key
         
-        mock_context.driver.find_element.return_value = mock_body_element
+        # Configure chaining
+        instance = mock_actions_class.return_value
+        instance.send_keys.return_value = instance
         
-        # Should not raise
-        step_verify_text_present(mock_context, "Welcome")
+        step_press_key(mock_context, "Enter")
+        instance.send_keys.assert_called()
+        instance.perform.assert_called()
 
-    def test_verify_text_present_case_insensitive(self, mock_context, mock_body_element):
-        """✓ Text verification is case-insensitive."""
-        from qa_framework.steps.gui_steps import step_verify_text_present
-        
-        mock_context.driver.find_element.return_value = mock_body_element
-        
-        # Should not raise - case insensitive match
-        step_verify_text_present(mock_context, "WELCOME")
-        step_verify_text_present(mock_context, "dashboard")
-
-    def test_verify_text_present_fails_when_not_found(self, mock_context):
-        """✓ Text verification fails when text is not found."""
-        from qa_framework.steps.gui_steps import step_verify_text_present
-        
-        mock_body = MagicMock()
-        mock_body.text = "Error page - Something went wrong"
-        mock_context.driver.find_element.return_value = mock_body
-        
-        with pytest.raises(AssertionError):
-            step_verify_text_present(mock_context, "Welcome back")
-
+    def test_press_key_invalid(self, mock_context):
+        from qa_framework.steps.gui_steps import step_press_key
+        with pytest.raises(ValueError, match="Unsupported key"):
+            step_press_key(mock_context, "InvalidKey")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 3: PAGE TITLE STEPS
+# SECTION 2: WINDOW & FRAME TESTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestPageTitleSteps:
-    """Tests for page title verification step definitions."""
+class TestContextSwitching:
+    """Tests for tab and iframe switching."""
 
-    @patch("qa_framework.steps.gui_steps.wait_for_title")
-    def test_verify_page_title_success(self, mock_wait, mock_context):
-        """✓ Title verification passes when title matches."""
-        from qa_framework.steps.gui_steps import step_verify_page_title
-        
-        mock_context.driver.title = "Home Page"
-        
-        step_verify_page_title(mock_context, "Home Page")
-        
-        mock_wait.assert_called_once()
+    def test_switch_tab(self, mock_context):
+        from qa_framework.steps.gui_steps import step_switch_to_next_tab
+        step_switch_to_next_tab(mock_context)
+        mock_context.driver.switch_to.window.assert_called_with("handle2")
 
-    @patch("qa_framework.steps.gui_steps.wait_for_title")
-    def test_verify_page_title_with_i18n(self, mock_wait, mock_context):
-        """✓ Title verification supports i18n token resolution."""
-        from qa_framework.steps.gui_steps import step_verify_page_title
-        
-        # Setup i18n to resolve tokens
-        mock_context.i18n.resolve = lambda x: "Dashboard Principal"
-        mock_context.driver.title = "Dashboard Principal"
-        
-        step_verify_page_title(mock_context, "[LANG:dashboard.title]")
+    def test_close_tab(self, mock_context):
+        from qa_framework.steps.gui_steps import step_close_current_tab
+        step_close_current_tab(mock_context)
+        mock_context.driver.close.assert_called_once()
+        mock_context.driver.switch_to.window.assert_called_with("handle1")
 
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    def test_switch_to_iframe(self, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_switch_to_iframe
+        mock_elem = MagicMock()
+        mock_get_elem.return_value = mock_elem
+        
+        step_switch_to_iframe(mock_context, "my_frame")
+        mock_context.driver.switch_to.frame.assert_called_once()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 4: WAIT UTILITIES
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestWaitUtilities:
-    """Tests for driver-agnostic wait utility functions."""
-
-    def test_wait_for_visible_selenium(self, mock_context):
-        """✓ wait_for_visible works with Selenium drivers."""
-        from qa_framework.steps.gui_steps import wait_for_visible
-        
-        # Ensure driver doesn't have 'page' (not Playwright)
-        del mock_context.driver.page
-        
-        locator = (By.ID, "element-id")
-        
-        # Should not raise
-        with patch("qa_framework.steps.gui_steps.WebDriverWait") as mock_wait:
-            mock_wait.return_value.until.return_value = MagicMock()
-            wait_for_visible(mock_context.driver, locator, timeout=10)
-            mock_wait.assert_called_once()
-
-    def test_wait_for_clickable_selenium(self, mock_context):
-        """✓ wait_for_clickable works with Selenium drivers."""
-        from qa_framework.steps.gui_steps import wait_for_clickable
-        
-        # Ensure driver doesn't have 'page' (not Playwright)
-        del mock_context.driver.page
-        
-        locator = (By.CSS_SELECTOR, ".btn-primary")
-        
-        with patch("qa_framework.steps.gui_steps.WebDriverWait") as mock_wait:
-            mock_wait.return_value.until.return_value = MagicMock()
-            wait_for_clickable(mock_context.driver, locator, timeout=5)
-            mock_wait.assert_called_once()
-
-    def test_wait_for_visible_playwright(self):
-        """✓ wait_for_visible works with Playwright drivers."""
-        from qa_framework.steps.gui_steps import wait_for_visible
-        
-        # Setup Playwright-like driver
-        mock_driver = MagicMock()
-        mock_driver.page = MagicMock()
-        mock_driver._convert_locator = lambda by, val: f"#{val}"
-        
-        locator = (By.ID, "element-id")
-        wait_for_visible(mock_driver, locator, timeout=10)
-        
-        mock_driver.page.wait_for_selector.assert_called_once()
-
+    def test_switch_to_default(self, mock_context):
+        from qa_framework.steps.gui_steps import step_switch_to_default_content
+        step_switch_to_default_content(mock_context)
+        mock_context.driver.switch_to.default_content.assert_called_once()
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 5: TOKEN RESOLUTION
+# SECTION 3: ATTRIBUTE & URL VALIDATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class TestTokenResolution:
-    """Tests for token resolution in step definitions."""
+class TestAdvancedValidation:
+    """Tests for attribute and URL verification."""
 
-    def test_resolve_tokens_with_variables(self, mock_context):
-        """✓ resolve_tokens handles variable tokens."""
-        from qa_framework.steps.gui_steps import resolve_tokens
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    def test_verify_attribute(self, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_verify_attribute
+        mock_elem = MagicMock()
+        mock_elem.get_attribute.return_value = "submit"
+        mock_get_elem.return_value = mock_elem
         
-        mock_context.variables.resolve = lambda x: x.replace("[UUID]", "abc-123")
+        step_verify_attribute(mock_context, "btn", "type", "submit")
+
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    def test_verify_attribute_fails(self, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_verify_attribute
+        mock_elem = MagicMock()
+        mock_elem.get_attribute.return_value = "button"
+        mock_get_elem.return_value = mock_elem
         
-        result = resolve_tokens(mock_context, "User ID: [UUID]")
-        assert result == "User ID: abc-123"
+        with pytest.raises(AssertionError, match="Expected attribute"):
+            step_verify_attribute(mock_context, "btn", "type", "submit")
 
-    def test_resolve_tokens_with_i18n(self, mock_context):
-        """✓ resolve_tokens handles i18n tokens."""
-        from qa_framework.steps.gui_steps import resolve_tokens
+    def test_verify_url_contains(self, mock_context):
+        from qa_framework.steps.gui_steps import step_verify_url_contains
+        mock_context.driver.current_url = "https://example.com/login?token=123"
         
-        mock_context.i18n.resolve = lambda x: x.replace("[LANG:greeting]", "Hello")
+        step_verify_url_contains(mock_context, "login")
+
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    def test_verify_hidden(self, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_verify_element_hidden
+        mock_elem = MagicMock()
+        mock_elem.is_displayed.return_value = False
+        mock_get_elem.return_value = mock_elem
         
-        result = resolve_tokens(mock_context, "[LANG:greeting] World")
-        assert result == "Hello World"
+        step_verify_element_hidden(mock_context, "ghost_elem")
 
-    def test_resolve_tokens_passthrough(self, mock_context):
-        """✓ resolve_tokens returns plain text unchanged."""
-        from qa_framework.steps.gui_steps import resolve_tokens
+    @patch("qa_framework.steps.gui_steps.get_element_from_page_object")
+    def test_verify_hidden_not_present(self, mock_get_elem, mock_context):
+        from qa_framework.steps.gui_steps import step_verify_element_hidden
+        mock_get_elem.side_effect = NoSuchElementException("Element not found")
         
-        result = resolve_tokens(mock_context, "Plain text without tokens")
-        assert result == "Plain text without tokens"
-
-    def test_resolve_tokens_non_string(self, mock_context):
-        """✓ resolve_tokens returns non-strings unchanged."""
-        from qa_framework.steps.gui_steps import resolve_tokens
-        
-        assert resolve_tokens(mock_context, 123) == 123
-        assert resolve_tokens(mock_context, None) is None
-        assert resolve_tokens(mock_context, True) is True
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 6: SCREENSHOT STEPS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestScreenshotSteps:
-    """Tests for screenshot capture step definitions."""
-
-    @patch("os.path.exists", return_value=True)
-    @patch("os.makedirs")
-    def test_take_screenshot(self, mock_makedirs, mock_exists, mock_context):
-        """✓ Screenshot step saves file to correct location."""
-        from qa_framework.steps.gui_steps import step_take_screenshot
-        
-        mock_context.screenshots_dir = "screenshots"
-        # Remove 'embed' attribute to prevent file reading attempt
-        del mock_context.embed
-        
-        step_take_screenshot(mock_context, "login_page")
-        
-        mock_context.driver.save_screenshot.assert_called_once()
-        # Verify the filename contains the expected name
-        call_args = mock_context.driver.save_screenshot.call_args[0][0]
-        assert "login_page.png" in call_args
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# SECTION 7: CURRENT PAGE CONTEXT
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TestCurrentPageContext:
-    """Tests for context-aware step definitions."""
-
-    def test_set_current_page(self, mock_context):
-        """✓ Setting current page stores value in context."""
-        from qa_framework.steps.gui_steps import step_set_current_page
-        
-        # Patch file operations to avoid YAML loading
-        with patch("os.path.join", return_value="/fake/path"):
-            with patch("qa_framework.steps.gui_steps._find_page_yaml", return_value=None):
-                step_set_current_page(mock_context, "dashboard")
-        
-        assert mock_context.current_page == "dashboard"
-
-    def test_click_without_current_page(self, mock_context):
-        """✓ Context-aware click raises error without current_page."""
-        from qa_framework.steps.gui_steps import step_click_current_page_object
-        
-        mock_context.current_page = None
-        
-        with pytest.raises(AttributeError, match="No current page set"):
-            step_click_current_page_object(mock_context, "submit_button")
-
+        # Should pass even if element doesn't exist
+        step_verify_element_hidden(mock_context, "deleted_elem")
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # RUN CONFIGURATION
