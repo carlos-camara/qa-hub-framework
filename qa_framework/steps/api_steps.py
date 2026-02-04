@@ -404,3 +404,104 @@ def step_print_request_headers(context):
     print(json.dumps(sent_headers, indent=2, ensure_ascii=False, sort_keys=True))
     print("═"*65)
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECTION 9: SECURITY SANITY CHECKS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@then("the response should not leak server metadata")
+def step_security_no_metadata_leaks(context):
+    """
+    Verify that the response doesn't contain sensitive server technology headers.
+    Checks for 'Server' and 'X-Powered-By' leakage.
+    """
+    assert context.response is not None, "No response found."
+    headers = context.response.headers
+    
+    leaked = []
+    # 1. Server header: Should be absent or generic (e.g. 'nginx' without version)
+    server = headers.get("Server", "")
+    if server and any(char.isdigit() for char in server):
+        leaked.append(f"Server: {server}")
+        
+    # 2. X-Powered-By: Should be completely absent
+    powered_by = headers.get("X-Powered-By")
+    if powered_by:
+        leaked.append(f"X-Powered-By: {powered_by}")
+        
+    if leaked:
+        msg = f"Security Leak Detected: {', '.join(leaked)}"
+        ContextualLogger.error(msg, context)
+        raise AssertionError(msg)
+    
+    ContextualLogger.success("No server metadata leaks detected.", context)
+
+@then("the response should contain mandatory security headers")
+def step_security_mandatory_headers(context):
+    """
+    Verify the presence of essential security headers:
+    - HSTS, X-Content-Type-Options, X-Frame-Options, CSP
+    """
+    assert context.response is not None, "No response found."
+    headers = context.response.headers
+    missing = []
+    
+    checks = {
+        "Strict-Transport-Security": "HSTS missing (prevents MITM)",
+        "X-Content-Type-Options": "MIME-sniffing protection missing",
+        "X-Frame-Options": "Clickjacking protection missing",
+        "Content-Security-Policy": "CSP missing (XSS protection)"
+    }
+    
+    for header, description in checks.items():
+        if header not in headers:
+            missing.append(f"{header} ({description})")
+            
+    if missing:
+        msg = f"Missing Security Headers: {'; '.join(missing)}"
+        ContextualLogger.warning(msg, context)
+        raise AssertionError(msg)
+
+    ContextualLogger.success("All mandatory security headers are present.", context)
+
+@then("all session cookies should be secure")
+def step_security_cookies(context):
+    """
+    Verify that all cookies in the response have security flags:
+    - Secure (HTTPS only)
+    - HttpOnly (No JS access)
+    - SameSite (CSRF protection)
+    """
+    assert context.response is not None, "No response found."
+    cookies = context.response.cookies
+    insecure = []
+    
+    for cookie in cookies:
+        issues = []
+        if not cookie.secure: issues.append("Missing 'Secure' flag")
+        
+        # Requests cookiejar handling for HttpOnly
+        is_httponly = False
+        if hasattr(cookie, 'has_nonstandard_attr') and cookie.has_nonstandard_attr('HttpOnly'):
+            is_httponly = True
+        elif 'httponly' in str(cookie).lower():
+            is_httponly = True
+        elif getattr(cookie, 'httponly', False):
+            is_httponly = True
+            
+        if not is_httponly:
+            issues.append("Missing 'HttpOnly' flag")
+        
+        # SameSite check
+        samesite = getattr(cookie, 'rest', {}).get('SameSite', '').lower()
+        if samesite not in ['strict', 'lax']:
+            issues.append(f"Insecure SameSite: {samesite or 'None'}")
+            
+        if issues:
+            insecure.append(f"Cookie '{cookie.name}': {', '.join(issues)}")
+            
+    if insecure:
+        msg = f"Insecure Cookies Detected: {'; '.join(insecure)}"
+        ContextualLogger.error(msg, context)
+        raise AssertionError(msg)
+        
+    ContextualLogger.success("All response cookies are properly secured.", context)
