@@ -366,3 +366,11 @@ def step_should_see_at_least_elements_in_current_page(context, count, element_na
 def step_click_sidebar_element(context, element_name):
     """Shortcut for clicking sidebar elements"""
     step_click_page_object(context, element_name, "sidebar")
+
+@then('I take a screenshot of the "{element_description}" named "{screenshot_name}"')
+def step_take_element_screenshot(context, element_description, screenshot_name):
+    """
+    Take a screenshot. 
+    Currently a proxy for full page screenshot, but standardized in the framework.
+    """
+    step_take_screenshot(context, screenshot_name)
