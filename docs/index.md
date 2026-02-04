@@ -1,34 +1,33 @@
 # 🚀 QA Hub Framework
 
-Welcome to the official documentation for the **QA Hub Framework**.
+Build ultra-premium, ultra-stable automation suites with Python, Behave, and a YAML-driven engine.
 
-This framework is built to accelerate quality engineering by providing a set of standardized, reusable building blocks for API, GUI, and PDF automation.
+The **QA Hub Framework** is a high-performance, developer-first testing package designed to simplify complex GUI, API, and Visual automation workflows.
 
-## ✨ Key Features
+## 🌟 Key Features
 
-- **🌐 Unified API Automation**: Standardized steps for REST validation with dot-notation JSON path support.
-- **🖱️ Robust GUI Testing**: Pre-built Selenium interactions with smart waits and visual validation.
-- **📄 Advanced PDF Verification**: Automated document download and content integrity checks.
-- **📔 Gherkin-First**: Focused on readable, maintainable, and collaborative test scenarios.
-- **🛠️ Extensible Architecture**: Easily add project-specific steps while leveraging the core common library.
+-   **🏗️ YAML Locators**: Define your Page Objects in clean YAML files. No more hardcoded selectors.
+-   **🎭 Unified Drivers**: A single API that works transparently with Selenium and Playwright.
+-   **👁️ Visual Accuracy**: Pixel-perfect regression testing with RMS error detection.
+-   **🧩 Modular Elements**: Rich library of typed elements (Select, Link, Input, etc.).
+-   **🌍 Intelligent I18n**: Built-in support for multi-language testing using `[LANG:key]` tokens.
+-   **⚡ Dynamic Data**: Generate UUIDs, timestamps, and random strings on the fly.
 
-## 🏁 Quick Start
+## 🛠️ Included in the Box
 
-To begin using the framework in your project, install it via the remote repository:
-
-```bash
-pip install git+https://github.com/carlos-camara/qa-hub-framework.git#egg=qa-automation-framework
-```
-
-Then, import the steps into your `environment.py` or steps directory:
-
-```python
-from qa_framework.steps.api_steps import *
-from qa_framework.steps.gui_steps import *
-```
+-   **Core Library**: Typed elements and the dynamic `ElementFactory`.
+-   **Gherkin Steps**: Highly curated, reusable steps for high-speed test writing.
+-   **Utility Suite**: Robust handlers for variables, visual assets, and HTTP operations.
+-   **Self-Testing**: A comprehensive suite of 150+ unit tests ensuring framework integrity.
 
 ---
 
-<p align="center">
-  <i>Empowering engineers to build better software, faster.</i>
-</p>
+## 🚦 Quick Start
+
+Get up and running in minutes:
+
+```bash
+pip install .
+```
+
+Check out the [Installation Guide](installation.md) for detailed setup instructions.

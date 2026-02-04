@@ -54,8 +54,12 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Core Library:
+    - Element Types: elements.md
+    - Utility Handlers: utilities.md
   - Gherkin Steps:
     - API Testing: api-testing.md
     - GUI Testing: gui-testing.md
     - PDF Testing: pdf-testing.md
   - Architecture: architecture.md
+  - Internal Testing: testing-framework.md

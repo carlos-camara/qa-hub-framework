@@ -1,45 +1,69 @@
 # 🖱️ GUI Testing
 
-Web automation is powered by Selenium, providing a high-level Gherkin interface that abstracts away the complexity of handling browser drivers and elements.
+The framework provides powerful Gherkin steps for browser automation, supporting both Selenium (standard) and Playwright (via wrapper) through a unified API.
 
-## 🧭 Navigation
+## 🧭 Basic Navigation & Interactions
 
-Start your GUI scenarios by navigating to a URL:
+Start your GUI scenarios by navigating to a URL and interacting with elements using natural language.
+
 ```gherkin
 Given I navigate to "https://dashboard.example.com"
-```
-
-## ⚡ Interactions
-
-The framework focuses on readable interactions that don't require complex CSS selectors in your Gherkin.
-
-### Clicking Elements
-```gherkin
-When I click on the element with text "Submit"
 When I click on the button with text "Login"
+And I scroll to the bottom of the page
+Then I should see the text "Welcome back"
 ```
 
-### Scrolling
+---
+
+## 🏗️ Page Object Pattern
+
+We use a **YAML-driven Page Object pattern**. This separates locators from test logic, allowing non-technical stakeholders to update locators without touching Python code.
+
+### Locators Definition
+```yaml
+# features/page_objects/dashboard.yml
+stats_panel:
+  by: css
+  value: ".stats-container"
+  type: webelement
+  wait_load: true  # Automatically waited for on page load
+```
+
+### Context-Aware Steps
+By setting the "current page", you can write shorter, more readable steps:
 ```gherkin
-When I scroll to the bottom of the page
+Given the "dashboard" page is displayed
+Then I should see the "stats_panel"
 ```
 
-## 🔍 Validation
+---
 
-### Basic Checks
-```gherkin
-Then the page title should be "Dashboard | QA Hub"
-Then I should see the text "Welcome back, Carlos"
-Then I should see an element with class "status-indicator--online"
-```
+## 📸 Visual Regression Testing
 
-## 📸 Visual Validation
+Verify UI consistency using pixel-based comparison against verified baselines.
 
-Automated screenshots are crucial for failure analysis and UI regression checks.
-
+### Screenshot Capture
 ```gherkin
 Then I take a screenshot named "login-page-state"
 ```
 
+### Visual Match with Thresholds
+For dynamic environments, allow for minor rendering differences:
+```gherkin
+Then the "Charts" page should visually match "dashboard_snapshot" with a 5.0% tolerance
+```
+
 !!! note "Artifact Integration"
-    Screenshots are automatically saved to the `screenshots/` directory and embedded as Base64 images if your Behave formatter supports it (like the HTML formatter).
+    Screenshots are automatically saved to the `screenshots/` directory and embedded as Base64 images in HTML reports.
+
+---
+
+## 🛡️ Synchronization
+
+The framework automatically handles common timing issues through driver-agnostic wait utilities:
+- `wait_for_visible()`: Ensures the element is in DOM and clickable.
+- `wait_for_clickable()`: Ensures the element is enabled.
+- `wait_for_title()`: Waits for page transitons.
+
+!!! tip "Performance"
+    The framework uses optimized polling and explicit waits instead of `time.sleep()`, resulting in faster and more stable tests.
