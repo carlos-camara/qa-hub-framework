@@ -327,6 +327,24 @@ def step_current_element_should_contain_text(context, element_name, text):
         raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
     step_element_should_contain_text(context, element_name, page_name, text)
 
+@then('the following elements should contain these texts')
+def step_bulk_elements_should_contain_text(context):
+    """
+    Verify multiple elements contain expected texts using a table.
+    Example:
+      Then the following elements should contain these texts:
+        | element           | value                                     |
+        | stats_passed_card | [LANG:dashboard.stats.system_health]    |
+    """
+    if not context.table:
+        return
+        
+    for row in context.table:
+        element_name = row['element']
+        expected_text = row['value']
+        # Call the existing verification logic for each row
+        step_current_element_should_contain_text(context, element_name, expected_text)
+
 @then('I should see the "{element_name}"')
 @then('the "{element_name}" should be visible')
 def step_should_see_current_page_object(context, element_name):
