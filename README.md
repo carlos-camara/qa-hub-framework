@@ -12,11 +12,12 @@ A **premium, reusable automated testing framework** designed to streamline test 
 ## ✨ Key Features
 
 - 🏗️ **Page Object Model (POM)**: Standardized structure for UI testing using a robust `BasePage`.
-- **Gherkin-First**: Focused on readable and maintainable test scenarios.
+- 🎭 **Dual-Driver Engine**: Native support for both **Selenium** and **Playwright**, switchable via configuration.
+- 🎨 **Visual Regression Engine**: RMS-based image comparison with configurable tolerance and automated baseline management.
+- **Gherkin-First**: Focused on readable and maintainable test scenarios with professional syntax.
 - **Remote-Ready**: Easily installable via Git for CI/CD pipelines.
-- 🐳 **Pipeline Ready**: Optimized for CI/CD environments with headless Chrome support and standard configurations.
-- 📝 **BDD Integration**: Seamless support for Gherkin syntax via Behave.
-- 🛠️ **Utility Suite**: Built-in driver factory and common steps to reduce boilerplate code.
+- 🐳 **Pipeline Ready**: Optimized for CI/CD environments with headless support and automated driver management.
+- 🛠️ **Utility Suite**: Built-in element factory and common steps to reduce boilerplate code.
 
 ---
 
@@ -74,6 +75,40 @@ class LoginPage(BasePage):
     
     def login(self, username):
         self.send_keys(self.USERNAME_INPUT, username)
+```
+
+---
+
+### 3. Modern Driver Configuration
+
+The framework supports switching between **Selenium** and **Playwright** via `features/config/properties.cfg`:
+
+```ini
+[Driver]
+web_library: playwright  # selenium | playwright
+type: chrome             # chrome | firefox | edge
+headless: true
+```
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `web_library` | `selenium` | Choose between Selenium or Playwright backends |
+| `headless` | `True` | Run browser without GUI (ideal for CI) |
+| `window_width` | `1366` | Custom viewport width |
+| `window_height` | `768` | Custom viewport height |
+
+---
+
+## 🎨 Visual Regression Testing
+
+The framework includes a professional-grade image comparison engine.
+
+- **Baseline Management**: Missing baselines are automatically seeded during the first run.
+- **RMS Error Calculation**: High-fidelity detection of layout shifts and CSS glitches.
+- **Agnostic Logic**: Works identically across Selenium and Playwright backends.
+
+```gherkin
+Then the "stats grid" element should visually match the baseline image "dashboard_stats" with a 5.0% tolerance
 ```
 
 ---

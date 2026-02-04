@@ -10,7 +10,7 @@ Standardized steps for REST API validation, supporting dynamic variables, comple
 
 ### Navigation & Setup
 - `Given the API base URL is "{base_url}"`: Sets the target host.
-- `When I set request headers`: Takes a table of key-value pairs.
+- `When I set request headers`: Takes a table of key-value pairs (no trailing colon).
 
 ### Requests & Uploads
 - `When I send a "{method}" request to "{path}"`: Simple HTTP call.
@@ -55,6 +55,10 @@ Steps for web UI interaction and validation, including robust waits and visual c
 - `Then the page title should be "{expected_title}"`: Title verification.
 - `Then I should see the text "{text}"`: Global page source check.
 - `Then I should see an element with class "{class_name}"`: CSS-based visibility check.
+
+### Visual Comparison & Regression
+- `Then the "{description}" element should visually match the baseline image "{name}"`: Pixel-perfect match (0% tolerance).
+- `Then the "{description}" page should visually match the baseline image "{name}" with a {threshold:f}% tolerance`: Configurable layout shift protection.
 
 ### Visual Captures
 - `Then I take a screenshot named "{screenshot_name}"`: Standard screenshot with HTML embedding support.
