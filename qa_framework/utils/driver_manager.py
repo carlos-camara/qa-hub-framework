@@ -10,12 +10,35 @@ class DriverManager:
     """Handles automatic downloading and unzipping of browser drivers."""
     
     DRIVERS_DIR = os.path.join(os.getcwd(), 'features', 'drivers')
-    GECKO_DRIVER_URL = "https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-win64.zip"
-    EDGE_DRIVER_URL = "https://msedgedriver.azureedge.net/122.0.2365.59/edgedriver_win64.zip"
     
     @classmethod
+    def get_platform(cls):
+        """Detect current platform and return Chrome-compatible platform name."""
+        sys_platform = platform.system().lower()
+        if sys_platform == "windows":
+            return "win64"
+        elif sys_platform == "linux":
+            return "linux64"
+        return "win64" # Default fallback
+
+    @classmethod
+    def get_executable_name(cls, browser_type):
+        """Return the correct executable name for the current OS."""
+        is_windows = platform.system().lower() == "windows"
+        ext = ".exe" if is_windows else ""
+        
+        if browser_type == "chrome":
+            return f"chromedriver{ext}"
+        elif browser_type == "firefox":
+            return f"geckodriver{ext}"
+        elif browser_type == "edge":
+            return f"msedgedriver{ext}"
+        return None
+
+    @classmethod
     def get_chrome_download_url(cls):
-        """Fetch the latest stable chromedriver URL for win64."""
+        """Fetch the latest stable chromedriver URL for the detected platform."""
+        target_platform = cls.get_platform()
         versions_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json"
         try:
             response = requests.get(versions_url, timeout=10)
@@ -24,13 +47,15 @@ class DriverManager:
                 # Get stable version downloads
                 downloads = data.get('channels', {}).get('Stable', {}).get('downloads', {}).get('chromedriver', [])
                 for download in downloads:
-                    if download.get('platform') == 'win64':
+                    if download.get('platform') == target_platform:
                         return download.get('url')
         except Exception as e:
             # Important: show full exception name for diagnostics
             print(f"[DriverManager] Error fetching Chrome versions ({type(e).__name__}): {e}")
         
-        # Fallback to 133 (current stable) if API fails to avoid the 122 mismatch
+        # Fallback to 133 (current stable)
+        if target_platform == "linux64":
+            return "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/linux64/chromedriver-linux64.zip"
         return "https://storage.googleapis.com/chrome-for-testing-public/133.0.6943.53/win64/chromedriver-win64.zip"
 
     @classmethod
@@ -40,10 +65,7 @@ class DriverManager:
         if not os.path.exists(cls.DRIVERS_DIR):
             os.makedirs(cls.DRIVERS_DIR)
 
-        executable_name = "chromedriver.exe" if browser_type == "chrome" else \
-                          "geckodriver.exe" if browser_type == "firefox" else \
-                          "msedgedriver.exe" if browser_type == "edge" else None
-
+        executable_name = cls.get_executable_name(browser_type)
         if not executable_name:
             return None
 
@@ -58,25 +80,40 @@ class DriverManager:
         if browser_type == "chrome":
             url = cls.get_chrome_download_url()
         elif browser_type == "firefox":
-            url = cls.GECKO_DRIVER_URL
+            target = "win64" if cls.get_platform() == "win64" else "linux64"
+            # Standard Firefox URLs usually contain platform strings
+            url = f"https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-{target}.zip"
+            if target == "linux64":
+                 url = url.replace(".zip", ".tar.gz")
         else:
-            url = cls.EDGE_DRIVER_URL
+            # Edge is primarily Windows (simplified for now)
+            url = "https://msedgedriver.azureedge.net/122.0.2365.59/edgedriver_win64.zip"
         
         print(f"[DriverManager] Downloading {browser_type} driver from {url}...")
         response = requests.get(url)
         
         if response.status_code == 200:
-            with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
-                # Handle nested directories in zips (like chromedriver-win64/chromedriver.exe)
-                for member in zip_ref.namelist():
-                    filename = os.path.basename(member)
-                    if filename == executable_name:
-                        # Extract only the executable to the drivers directory
-                        with zip_ref.open(member) as source, open(local_path, "wb") as target:
-                            target.write(source.read())
-                        break
+            if url.endswith(".zip"):
+                with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
+                    # Handle nested directories in zips (like chromedriver-win64/chromedriver)
+                    for member in zip_ref.namelist():
+                        filename = os.path.basename(member)
+                        if filename == executable_name:
+                            # Extract only the executable to the drivers directory
+                            with zip_ref.open(member) as source, open(local_path, "wb") as target:
+                                target.write(source.read())
+                            break
+            elif url.endswith(".tar.gz"):
+                 with tarfile.open(fileobj=io.BytesIO(response.content), mode="r:gz") as tar:
+                    for member in tar.getmembers():
+                        filename = os.path.basename(member.name)
+                        if filename == executable_name:
+                            source = tar.extractfile(member)
+                            with open(local_path, "wb") as target:
+                                target.write(source.read())
+                            break
             
-            # Set executable permissions
+            # Set executable permissions (crucial for Linux)
             st = os.stat(local_path)
             os.chmod(local_path, st.st_mode | stat.S_IEXEC)
             
