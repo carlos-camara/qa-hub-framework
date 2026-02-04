@@ -50,5 +50,5 @@ class ReportManager:
         try:
             if not os.listdir(temp_dir):
                 os.rmdir(temp_dir)
-        except Exception:
+        except Exception:  # nosec B110 - Best-effort cleanup
             pass

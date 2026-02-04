@@ -56,7 +56,7 @@ class VariableHandler:
             "B": " ",
             "SHARP": "#",
             "UUID": lambda: str(uuid.uuid4()),
-            "RANDOM": lambda: str(random.randint(1000, 9999)),
+            "RANDOM": lambda: str(random.randint(1000, 9999)),  # nosec B311 - Test data
             "TIMESTAMP": lambda: str(int(datetime.now().timestamp())),
             "DATETIME": lambda: datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
@@ -71,9 +71,9 @@ class VariableHandler:
             type_name, length = match.groups()
             length = int(length)
             if type_name == "STRING":
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+                return ''.join(random.choices(string.ascii_letters + string.digits, k=length))  # nosec B311
             else:
-                return ''.join(random.choices(string.digits, k=length))
+                return ''.join(random.choices(string.digits, k=length))  # nosec B311
 
         # 3. Arrays with length
         match = re.match(r"(STRING|INTEGER)_ARRAY_WITH_LENGTH_(\d+)", token)
@@ -81,9 +81,9 @@ class VariableHandler:
             type_name, length = match.groups()
             length = int(length)
             if type_name == "STRING":
-                return [''.join(random.choices(string.ascii_letters, k=5)) for _ in range(length)]
+                return [''.join(random.choices(string.ascii_letters, k=5)) for _ in range(length)]  # nosec B311
             else:
-                return [random.randint(0, 100) for _ in range(length)]
+                return [random.randint(0, 100) for _ in range(length)]  # nosec B311
 
         # 4. JSON with length
         match = re.match(r"JSON_WITH_LENGTH_(\d+)", token)
@@ -99,11 +99,11 @@ class VariableHandler:
             return self._resolve_temporal(token)
 
         # 6. Random Phone Number
-        if token == "RANDOM_PHONE_NUMBER":
+        if token == "RANDOM_PHONE_NUMBER":  # nosec B105 - Token name, not password
             lang = self.dataset.get("language", "en")
             country = self.dataset.get("country", "US")
             # Simple placeholder for now - could be expanded
-            return f"+1{random.randint(200, 999)}{random.randint(200, 999)}{random.randint(1000, 9999)}"
+            return f"+1{random.randint(200, 999)}{random.randint(200, 999)}{random.randint(1000, 9999)}"  # nosec B311
 
         # 7. Functional Transformations (Wrappers)
         # Format: [TYPE:content] or [FUNCTION:content::args]

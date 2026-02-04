@@ -88,14 +88,14 @@ class Checkbox(WebElement):
                 from selenium.webdriver.common.by import By
                 label = self.driver.find_element(By.CSS_SELECTOR, f"label[for='{checkbox_id}']")
                 return label.text
-            except Exception:
+            except Exception:  # nosec B110 - Intentional fallback
                 pass
         
         # Try parent label
         try:
             parent = element.find_element(By.XPATH, "./ancestor::label")
             return parent.text
-        except Exception:
+        except Exception:  # nosec B110 - Intentional fallback
             pass
         
         return ""

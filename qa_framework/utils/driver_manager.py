@@ -90,7 +90,7 @@ class DriverManager:
             url = "https://msedgedriver.azureedge.net/122.0.2365.59/edgedriver_win64.zip"
         
         print(f"[DriverManager] Downloading {browser_type} driver from {url}...")
-        response = requests.get(url)
+        response = requests.get(url, timeout=120)  # 2 min timeout for driver downloads
         
         if response.status_code == 200:
             if url.endswith(".zip"):
