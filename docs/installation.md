@@ -27,6 +27,24 @@ Then run:
 pip install -r requirements.txt
 ```
 
+```bash
+pip install -r requirements.txt
+```
+
+## 🛠️ Configuration
+
+The framework uses a centralized configuration system.
+
+1. Create a `features/config/config.yaml` file in your project:
+   ```yaml
+   Driver:
+     type: chrome
+     headless: true
+   ```
+2. (Optional) Create a `.env` file for secrets.
+
+For full details, see the [Configuration Guide](./configuration.md).
+
 ## ⚙️ Initial Configuration
 
 Once installed, you must tell Behave where to find the step definitions. In your project's `environment.py` (or individual step files), import the desired components:

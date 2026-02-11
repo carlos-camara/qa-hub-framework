@@ -34,16 +34,17 @@ High-fidelity visual regression testing using pixel-by-pixel comparison with RMS
 - **Failing Strategy**: Tests fail automatically if similarity falls below the threshold.
 
 ### Configuration
-Visual testing is controlled via the `visual_config` in the environment context:
+Visual testing is controlled via the `VisualTests` section in `features/config/config.yaml`:
 
-```python
-context.visual_config = {
-    'enabled': True,
-    'save': False,      # Set to True to update all baselines
-    'fail': True,       # Fail test on mismatch
-    'baseline_name': 'desktop' # Prefix for environment-specific baselines
-}
+```yaml
+VisualTests:
+  enabled: true
+  save: false      # Set to true to update all baselines
+  fail: true       # Fail test on mismatch
+  baseline_name: "{Driver_type}" # Environment-specific baseline prefix
 ```
+
+The framework automatically loads these settings into `context.visual_config`.
 
 ---
 

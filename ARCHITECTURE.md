@@ -13,15 +13,24 @@ The `BasePage` class is the foundation of our Page Object Model. It encapsulates
 - `send_keys(locator, text)`: Safely inputs text after clearing the field.
 - `is_visible(locator)`: Verification utility for assertions.
 
-### 2. Driver Factory (`qa_framework.utils.driver`)
-Centralizes the creation of the WebDriver instance.
+### 2. Configuration Manager (`qa_framework.core.config_manager`)
+A singleton engine that centralizes configuration loading from multiple sources.
+
+**Hierarchy:**
+1. Environment Variables (Highest Priority)
+2. `.env` File (Secrets)
+3. Environment-Specific Config (`config.staging.yaml`)
+4. Base Config (`config.yaml`)
+
+### 3. Driver Factory (`qa_framework.utils.driver`)
+Centralizes the creation of the WebDriver instance, pulling settings directly from the `ConfigManager`.
 
 **Features:**
 - Standard Chrome options for stability.
 - Headless mode toggle for local vs CI execution.
 - Sandboxing and GPU disabling for Docker compatibility.
 
-### 3. Common Steps (`qa_framework.steps.common_steps`)
+### 4. Common Steps (`qa_framework.steps.common_steps`)
 A collection of reusable Behave steps that can be shared across multiple feature files to avoid duplication.
 
 ---

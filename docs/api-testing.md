@@ -2,6 +2,16 @@
 
 The framework provides a robust set of Gherkin steps for testing RESTful APIs, built on top of the `requests` library with a focus on high-fidelity assertions and dynamic data.
 
+## 🔧 Configuration
+
+Use `features/config/config.yaml` to define environment-specific API endpoints.
+
+```yaml
+# features/config/config.staging.yaml
+UserAPI:
+  base_url: "https://staging-api.example.com"
+```
+
 ## 📍 Environment Setup
 
 Before sending requests, define the target environment and optional headers.

@@ -2,7 +2,19 @@
 
 The framework provides powerful Gherkin steps for browser automation, supporting both Selenium (standard) and Playwright (via wrapper) through a unified API.
 
-## 🧭 Basic Navigation & Interactions
+## 🎭 Driver Configuration
+
+Browser settings (headless mode, window size, browser type) are managed via `features/config/config.yaml`.
+
+```yaml
+Driver:
+  type: chrome
+  headless: true
+```
+
+For environment-specific overrides (e.g., debugging in Staging), see the [Configuration Guide](./configuration.md).
+
+## compass Basic Navigation & Interactions
 
 Start your GUI scenarios by navigating to a URL and interacting with elements using natural language.
 
