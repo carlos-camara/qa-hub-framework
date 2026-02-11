@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from ..core.language_handler import LanguageHandler
 from ..core.variable_handler import VariableHandler
+from ..core.config_manager import ConfigManager
 from .driver import get_driver, get_config, resolve_config_variable
 
 class FrameworkHooks:
@@ -13,16 +14,18 @@ class FrameworkHooks:
         depending on configuration.
         """
         # 1. Configuration
-        config = get_config()
+        config = ConfigManager.instance()
         context.config_obj = config # Store for later use
         
         # 2. Driver Config
         driver_config = {}
-        if config.has_section('Driver'):
+        # ConfigManager returns a dict for the section, or None/Empty dict
+        driver_section = config.get('Driver')
+        if driver_section:
             driver_config = {
-                'reuse_driver': config.getboolean('Driver', 'reuse_driver', fallback=False),
-                'reuse_driver_session': config.getboolean('Driver', 'reuse_driver_session', fallback=False),
-                'restart_driver_after_failure': config.getboolean('Driver', 'restart_driver_after_failure', fallback=True),
+                'reuse_driver': str(driver_section.get('reuse_driver', 'false')).lower() == 'true',
+                'reuse_driver_session': str(driver_section.get('reuse_driver_session', 'false')).lower() == 'true',
+                'restart_driver_after_failure': str(driver_section.get('restart_driver_after_failure', 'true')).lower() == 'true',
             }
         context.driver_config = driver_config
 
@@ -42,10 +45,10 @@ class FrameworkHooks:
         
         # 5. Visual Testing Config
         visual_config = {}
-        if config.has_section('VisualTests'):
-            for option in config.options('VisualTests'):
-                raw_value = config.get('VisualTests', option)
-                resolved_value = resolve_config_variable(config, raw_value)
+        visual_section = config.get('VisualTests')
+        if visual_section:
+            for option, raw_value in visual_section.items():
+                resolved_value = str(raw_value) 
                 if resolved_value.lower() in ['true', 'false']:
                     visual_config[option] = resolved_value.lower() == 'true'
                 else:

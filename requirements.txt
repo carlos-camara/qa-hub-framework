@@ -6,3 +6,4 @@ pypdf>=6.6.2
 Pillow>=10.3.0
 playwright>=1.42.0
 behave-html-formatter>=0.5.1
+python-dotenv>=1.0.1

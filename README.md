@@ -75,23 +75,29 @@ qa-hub run --env staging --tags smoke
 
 ---
 
-### 3. Modern Driver Configuration
+## 🛠️ Configuration Manager
 
-The framework supports switching between **Selenium** and **Playwright** via `features/config/properties.cfg`:
+The framework now uses a centralized configuration system that supports:
 
-```ini
-[Driver]
-web_library: playwright  # selenium | playwright
-type: chrome             # chrome | firefox | edge
-headless: true
+- **Base Config**: `config.yaml` (default settings)
+- **Environment Overrides**: `config.staging.yaml`, `config.prod.yaml` (loaded based on `ENV` var)
+- **Secrets**: `.env` file (loaded automatically)
+- **Env Vars**: System environment variables override everything (e.g., `DRIVER_HEADLESS=false`)
+
+### Usage
+
+1. Create a `config.yaml` in your project root:
+```yaml
+Driver:
+  type: chrome
+  headless: true
 ```
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `web_library` | `selenium` | Choose between Selenium or Playwright backends |
-| `headless` | `True` | Run browser without GUI (ideal for CI) |
-| `window_width` | `1366` | Custom viewport width |
-| `window_height` | `768` | Custom viewport height |
+2. Switch environments at runtime:
+```bash
+# Loads config.staging.yaml + .env
+ENV=staging qa-hub run
+```
 
 ---
 
@@ -171,13 +177,13 @@ playwright install
 
 ### Configuration
 
-To use Playwright instead of Selenium, configure `features/config/properties.cfg`:
+To use Playwright instead of Selenium, configure `features/config/properties.cfg` or `config.yaml`:
 
-```ini
-[Driver]
-web_library: playwright
-type: chrome          # chrome | firefox | edge | webkit
-headless: true
+```yaml
+Driver:
+  web_library: playwright
+  type: chrome
+  headless: true
 ```
 
 ### Supported Browsers
@@ -191,19 +197,6 @@ headless: true
 
 > [!TIP]
 > WebKit is the engine behind Safari. Use it for cross-browser testing without macOS.
-
----
-
-
-## 🛠️ Configuration
-
-The framework uses environment variables and standard Python configurations. The `get_driver` utility supports:
-
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `headless` | `True` | Run browser without GUI (ideal for CI) |
-| `window_size` | `1365,768` | Initial browser viewport size |
-| `no_sandbox` | `True` | Essential for Linux/Docker environments |
 
 ---
 

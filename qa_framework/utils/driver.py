@@ -24,7 +24,9 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.edge.service import Service as EdgeService
 from .driver_manager import DriverManager
+from ..core.config_manager import ConfigManager
 
 # Playwright is optional - gracefully handle if not installed
 try:
@@ -38,76 +40,14 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def resolve_config_variable(config, value):
-    """
-    Resolve configuration variable references in a string.
-    
-    Enables dynamic configuration where one setting can reference another.
-    Useful for constructing URLs or paths that depend on other config values.
-    
-    Pattern Format:
-        {Section_Option} → Replaced with config[Section][Option]
-    
-    Args:
-        config: ConfigParser instance with loaded configuration
-        value: String potentially containing {Section_Option} patterns
-        
-    Returns:
-        String with all patterns replaced by their config values.
-        Unmatched patterns are left unchanged.
-        
-    Example:
-        # In properties.cfg:
-        # [Server]
-        # host = localhost
-        # port = 3000
-        # [Test]
-        # base_url = http://{Server_host}:{Server_port}
-        
-        resolve_config_variable(config, "http://{Server_host}:{Server_port}")
-        → "http://localhost:3000"
-    """
-    if not isinstance(value, str):
-        return value
-        
-    pattern = r'\{(\w+)_(\w+)\}'
-    
-    def replacer(match):
-        section = match.group(1)
-        option = match.group(2)
-        if config.has_section(section) and config.has_option(section, option):
-            return config.get(section, option)
-        return match.group(0)  # Return original if not found
-        
-    return re.sub(pattern, replacer, value)
-
+    pass # Deprecated: ConfigManager handles resolution internally if needed.
+    return value 
 
 def get_config():
     """
-    Load configuration from the project's properties.cfg file.
-    
-    Looks for config at: {cwd}/features/config/properties.cfg
-    
-    The configuration file uses INI format with sections:
-    
-    [Driver]
-    type = chrome          # Browser: chrome, firefox, edge, webkit
-    web_library = selenium # Library: selenium or playwright
-    headless = true        # Run without visible browser window
-    window_width = 1920    # Custom window dimensions
-    window_height = 1080
-    
-    [Server]
-    host = localhost
-    port = 3000
-    
-    Returns:
-        ConfigParser: Loaded configuration (empty if file doesn't exist)
+    Deprecated: Use ConfigManager.instance() instead.
     """
-    config = configparser.ConfigParser()
-    config_path = os.path.join(os.getcwd(), 'features', 'config', 'properties.cfg')
-    if os.path.exists(config_path):
-        config.read(config_path)
-    return config
+    return ConfigManager.instance()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -158,20 +98,27 @@ def get_driver(headless=True, no_sandbox=True, window_size="1365,768"):
         def after_scenario(context, scenario):
             context.driver.quit()
     """
-    config = get_config()
+    config = ConfigManager.instance()
     driver_type = "chrome"
     width = None
     height = None
     web_library = "selenium"
     
-    # --- Read configuration if available ---
-    if config.has_section('Driver'):
-        driver_type = config.get('Driver', 'type', fallback='chrome').lower()
-        web_library = config.get('Driver', 'web_library', fallback='selenium').lower()
-        if config.has_option('Driver', 'headless'):
-            headless = config.getboolean('Driver', 'headless')
-        width = config.get('Driver', 'window_width', fallback=None)
-        height = config.get('Driver', 'window_height', fallback=None)
+    # --- Read configuration via ConfigManager ---
+    driver_type = config.get('Driver.type', 'chrome').lower()
+    web_library = config.get('Driver.web_library', 'selenium').lower()
+    
+    # Check headless param (Driver.headless overrides arg if present)
+    config_headless = config.get('Driver.headless')
+    if config_headless is not None:
+         # Handle boolean conversion from string/bool
+         if isinstance(config_headless, str):
+             headless = config_headless.lower() == 'true'
+         else:
+             headless = bool(config_headless)
+
+    width = config.get('Driver.window_width')
+    height = config.get('Driver.window_height')
 
     # --- Playwright path ---
     if web_library == "playwright":
@@ -217,7 +164,8 @@ def _create_firefox_driver(config, headless, width, height, window_size, use_cus
     Returns:
         Firefox WebDriver instance
     """
-    path = config.get('Driver', 'gecko_driver_path', fallback=None) if config.has_section('Driver') else None
+    # config is now ConfigManager instance
+    path = config.get('Driver.gecko_driver_path')
     if not path:
         path = DriverManager.ensure_driver("firefox")
         
@@ -254,7 +202,8 @@ def _create_edge_driver(config, headless, window_size_arg, use_custom_size):
     Returns:
         Edge WebDriver instance
     """
-    path = config.get('Driver', 'edge_driver_path', fallback=None) if config.has_section('Driver') else None
+    # config is now ConfigManager instance
+    path = config.get('Driver.edge_driver_path')
     if not path:
         path = DriverManager.ensure_driver("edge")
         
@@ -294,7 +243,8 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
     Returns:
         Chrome WebDriver instance
     """
-    path = config.get('Driver', 'chrome_driver_path', fallback=None) if config.has_section('Driver') else None
+    # config is now ConfigManager instance
+    path = config.get('Driver.chrome_driver_path')
     if not path:
         path = DriverManager.ensure_driver("chrome")
         
