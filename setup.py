@@ -7,7 +7,7 @@ def read_requirements():
 
 setup(
     name="qa-automation-framework",
-    version="0.1.0",
+    version="0.1.1",
     description="Reusable QA Automation Framework for UI and API testing",
     packages=find_packages(),
     install_requires=read_requirements(),

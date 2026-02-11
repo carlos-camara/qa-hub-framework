@@ -11,6 +11,7 @@ Requires-Dist: pypdf>=6.6.2
 Requires-Dist: Pillow>=10.3.0
 Requires-Dist: playwright>=1.42.0
 Requires-Dist: behave-html-formatter>=0.5.1
+Requires-Dist: python-dotenv>=1.0.1
 Dynamic: license-file
 Dynamic: requires-dist
 Dynamic: summary

@@ -3,7 +3,7 @@ from datetime import datetime
 from ..core.language_handler import LanguageHandler
 from ..core.variable_handler import VariableHandler
 from ..core.config_manager import ConfigManager
-from .driver import get_driver, get_config, resolve_config_variable
+from .driver import get_driver
 
 class FrameworkHooks:
     @staticmethod

@@ -35,19 +35,7 @@ except ImportError:
     sync_playwright = None
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# CONFIGURATION UTILITIES
-# ═══════════════════════════════════════════════════════════════════════════════
 
-def resolve_config_variable(config, value):
-    pass # Deprecated: ConfigManager handles resolution internally if needed.
-    return value 
-
-def get_config():
-    """
-    Deprecated: Use ConfigManager.instance() instead.
-    """
-    return ConfigManager.instance()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -245,8 +233,10 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
     """
     # config is now ConfigManager instance
     path = config.get('Driver.chrome_driver_path')
+    version = config.get('Driver.version')
+    
     if not path:
-        path = DriverManager.ensure_driver("chrome")
+        path = DriverManager.ensure_driver("chrome", version=version)
         
     options = ChromeOptions()
     if headless:
