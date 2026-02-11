@@ -38,6 +38,9 @@ class ConfigManager:
         self._config = {}
         self.env = os.getenv("ENV", "local").lower()
         
+        # Define config directory path
+        self.config_dir = os.path.join(os.getcwd(), 'features', 'config')
+
         # 1. Load Base Config (config.yaml)
         self._load_yaml("config.yaml")
         
@@ -45,17 +48,12 @@ class ConfigManager:
         if self.env != "local":
             self._load_yaml(f"config.{self.env}.yaml")
             
-        # 3. Load .env file
+        # 3. Load .env file (from project root)
         load_dotenv(override=True)
-        
-        # 4. Legacy Support: Load properties.cfg if it exists and no yaml found
-        # (This ensures backward compatibility with existing projects)
-        if not self._config:
-            self._load_legacy_properties()
 
     def _load_yaml(self, filename: str):
         """Loads a YAML file and merges it into the config."""
-        path = os.path.join(os.getcwd(), filename)
+        path = os.path.join(self.config_dir, filename)
         if os.path.exists(path):
             try:
                 with open(path, 'r') as f:
@@ -73,18 +71,7 @@ class ConfigManager:
             else:
                 target[key] = value
 
-    def _load_legacy_properties(self):
-        """Loads legacy properties.cfg into the dict structure."""
-        import configparser
-        config = configparser.ConfigParser()
-        path = os.path.join(os.getcwd(), 'features', 'config', 'properties.cfg')
-        if os.path.exists(path):
-            config.read(path)
-            for section in config.sections():
-                if section not in self._config:
-                    self._config[section] = {}
-                for key, value in config.items(section):
-                    self._config[section][key] = value
+    # Legacy support removed as requested by user to unify logic
 
     def get(self, key: str, default: Any = None) -> Any:
         """

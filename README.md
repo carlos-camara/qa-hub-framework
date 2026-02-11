@@ -77,27 +77,9 @@ qa-hub run --env staging --tags smoke
 
 ## 🛠️ Configuration Manager
 
-The framework now uses a centralized configuration system that supports:
+The framework uses a centralized configuration system (`features/config/config.yaml`) that supports environment overrides (`staging`, `prod`) and secret management (`.env`).
 
-- **Base Config**: `config.yaml` (default settings)
-- **Environment Overrides**: `config.staging.yaml`, `config.prod.yaml` (loaded based on `ENV` var)
-- **Secrets**: `.env` file (loaded automatically)
-- **Env Vars**: System environment variables override everything (e.g., `DRIVER_HEADLESS=false`)
-
-### Usage
-
-1. Create a `config.yaml` in your project root:
-```yaml
-Driver:
-  type: chrome
-  headless: true
-```
-
-2. Switch environments at runtime:
-```bash
-# Loads config.staging.yaml + .env
-ENV=staging qa-hub run
-```
+For a detailed setup guide and advanced usage, see [Configuration Guide](./docs/configuration.md).
 
 ---
 
