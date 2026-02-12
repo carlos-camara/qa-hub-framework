@@ -3,7 +3,9 @@ import os
 import time
 from pypdf import PdfReader
 
-DOWNLOADS_DIR = os.path.join(os.path.expanduser("~"), "Downloads")
+from qa_framework.utils.driver import get_downloads_dir
+
+DOWNLOADS_DIR = get_downloads_dir()
 
 @when('I wait for {seconds:d} seconds for the download to complete')
 def step_wait_for_download(context, seconds):

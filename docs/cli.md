@@ -24,6 +24,7 @@ Executes the test suite using `behave` internally but with streamlined arguments
 | `--fail` | Stop execution immediately on the first failure | `False` |
 | `--no-capture` | Show `print` statements and logs in real-time | `False` |
 | `--path` | Path to the directory containing feature files | `features` |
+| `--junit-dir` | Directory to store JUnit XML reports | `None` |
 
 ## 💡 Examples
 
@@ -37,9 +38,9 @@ qa-hub run --env staging --tags smoke
 qa-hub run --path features/login.feature --no-capture
 ```
 
-**3. Cross-browser testing with fast-fail:**
+**3. CI/CD Integration with dynamic reporting:**
 ```bash
-qa-hub run --browser firefox --fail
+qa-hub run --junit-dir reports/test_run/dashboard_$(date +%s)
 ```
 
 ---

@@ -96,6 +96,7 @@ qa-hub run [OPTIONS]
 | `--browser` | Override browser (chrome, firefox, playwright) |
 | `--fail` | Stop execution on the first failure |
 | `--no-capture` | Show real-time logs and prints |
+| `--junit-dir` | Directory for JUnit XML reports |
 
 For more details, see the [CLI Guide](./docs/cli.md).
 

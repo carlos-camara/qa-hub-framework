@@ -27,11 +27,13 @@ def step_wait_seconds(context, seconds):
 
 @step('I wait for "{name}" to be stable')
 @step('I wait for "{name}" to update')
+@step('I wait for "{name}" to be ready')
 def step_wait_for_stability(context, name):
     """
     Generic placeholder for stability waits (animations, loading states).
     Standardizes 'I wait for "dashboard" to be stable' across projects.
     """
+    ContextualLogger.debug(f"Waiting for '{name}' stability (1s wait)...", context)
     time.sleep(1)
 
 

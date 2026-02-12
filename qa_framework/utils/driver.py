@@ -28,6 +28,13 @@ from selenium.webdriver.edge.service import Service as EdgeService
 from .driver_manager import DriverManager
 from ..core.config_manager import ConfigManager
 
+def get_downloads_dir():
+    """Returns the standardized project-level download directory."""
+    downloads_dir = os.path.join(os.getcwd(), 'features', 'resources', 'downloads')
+    if not os.path.exists(downloads_dir):
+        os.makedirs(downloads_dir)
+    return downloads_dir
+
 # Playwright is optional - gracefully handle if not installed
 try:
     from playwright.sync_api import sync_playwright
@@ -253,8 +260,36 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
     
     options.add_argument("--disable-gpu")
     
+    # Configure download directory
+    downloads_dir = get_downloads_dir()
+    prefs = {
+        "download.default_directory": downloads_dir,
+        "download.prompt_for_download": False,
+        "download.directory_upgrade": True,
+        "safebrowsing.enabled": True,
+        "plugins.always_open_pdf_externally": True  # Force PDF download
+    }
+    options.add_experimental_option("prefs", prefs)
+    
     service = ChromeService(executable_path=path) if path else ChromeService()
-    return webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(service=service, options=options)
+    
+    # NEW: Enable downloads in headless mode (required for Chrome 109+)
+    # We try both Page and Browser domains for maximum compatibility
+    if headless:
+        try:
+            driver.execute_cdp_cmd('Page.setDownloadBehavior', {
+                'behavior': 'allow',
+                'downloadPath': downloads_dir
+            })
+            driver.execute_cdp_cmd('Browser.setDownloadBehavior', {
+                'behavior': 'allow',
+                'downloadPath': downloads_dir
+            })
+        except Exception:
+            pass
+    
+    return driver
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
