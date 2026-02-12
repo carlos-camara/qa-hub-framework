@@ -1,11 +1,9 @@
 # 🚀 QA Hub Framework
 
-[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Selenium](https://img.shields.io/badge/selenium-4.19.0-green.svg)](https://www.selenium.dev/)
-[![Behave](https://img.shields.io/badge/behave-1.2.6-orange.svg)](https://behave.readthedocs.io/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
-A **premium, reusable automated testing framework** designed to streamline test development for both UI and API layers. Built with scalability and maintainability in mind, leveraging the power of Python, Behave (BDD), and Selenium.
+<div align="center">
+  <h3>The Precision Engineering Core for Automated Quality Assurance</h3>
+  <p><i>A premium, ultra-professional BDD framework bridging high-scale technical validation and surgical-grade reporting.</i></p>
+</div>
 
 ---
 
@@ -138,6 +136,28 @@ The framework includes a professional-grade image comparison engine.
 ```gherkin
 Then the "stats grid" element should visually match the baseline image "dashboard_stats" with a 5.0% tolerance
 ```
+
+---
+
+## ⚡ Global Step Registry
+
+The framework provides an extensive library of modular Gherkin steps across all testing layers, reducing project-specific boilerplate.
+
+### 🔌 API Validation
+- `Then the response JSON path "{path}" should equal "{expected}"` (Alias for precision matching)
+- `Then the response JSON path "{path}" should be a "{py_type}"` (Type-safe assertions)
+
+### 📄 Intelligent PDF Audit
+- `Then I verify the content of the first {count:d} pages of "{filename}"` (Non-empty extraction check)
+- `Then the PDF "{filename}" should have at least {page_count:d} pages`
+
+### 🏗️ Foundation & Stability
+- `And I wait for "{name}" to be stable` (Generic animation/load placeholder)
+- `When I store the text of the "{element_name}" as "{var_name}"` (Dynamic data extraction)
+
+### 🎨 Masked Visual Comparison
+- `Then the "{desc}" page should visually match the baseline image "{name}" without elements and with a {threshold:f}% tolerance`
+  (Allows blacking out dynamic elements like charts or dates to prevent false positives).
 
 ---
 

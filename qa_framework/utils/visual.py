@@ -224,3 +224,36 @@ class VisualHandler:
             print(f"[Visual] ✅ Match for '{screenshot_name}': Similarity={similarity:.2f}%")
             
         return similarity, is_match
+
+    @staticmethod
+    def apply_masking(image_path, regions):
+        """
+        Draw black rectangles over specific regions of an image.
+        
+        This is used to "hide" dynamic content (dates, numbers, user names)
+        before performing visual comparison, preventing false positives.
+        
+        Args:
+            image_path: Path to the image file to modify.
+            regions: List of dicts with coordinates: [{'x', 'y', 'width', 'height'}]
+        
+        Side Effects:
+            Overwrites the original image with the masked version.
+        """
+        if not regions:
+            return
+
+        from PIL import ImageDraw
+        img = Image.open(image_path).convert('RGB')
+        draw = ImageDraw.Draw(img)
+        
+        for region in regions:
+            x = region.get('x', 0)
+            y = region.get('y', 0)
+            w = region.get('width', 0)
+            h = region.get('height', 0)
+            
+            # Draw black rectangle (mask)
+            draw.rectangle([x, y, x + w, y + h], fill='black', outline='black')
+        
+        img.save(image_path)

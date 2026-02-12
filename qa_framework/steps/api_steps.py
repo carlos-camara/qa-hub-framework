@@ -199,6 +199,7 @@ def step_assert_response_header_contains(context, header_name: str, expected: st
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @then('the response JSON path "{path}" should be "{expected}"')
+@then('the response JSON path "{path}" should equal "{expected}"')
 def step_assert_json_path_str(context, path: str, expected: str):
     """Verify a JSON value matches a string or parsed type."""
     assert context.response_json is not None, "Response JSON is empty."

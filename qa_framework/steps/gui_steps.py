@@ -849,6 +849,66 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
         )
 
 
+@then('the "{description}" {target_type:w} should visually match the baseline image "{name}" without elements and with a {threshold:f}% tolerance')
+def step_visual_match_with_masking(context, description, target_type, name, threshold):
+    """
+    Perform a visual match after masking out specific elements using a table.
+    
+    Example:
+        Then the "dashboard" page should visually match the baseline image "dashboard_main" without elements and with a 5.0% tolerance
+          | element       |
+          | stats_values  |
+          | timestamp     |
+    """
+    if not context.table:
+        raise AssertionError("This step requires a table of elements to mask.")
+
+    # 1. Capture current state
+    ss_dir = os.path.join(os.getcwd(), 'features', 'resources', 'screenshots')
+    if not os.path.exists(ss_dir):
+        os.makedirs(ss_dir)
+    
+    current_path = os.path.join(ss_dir, f"{name}_latest.png")
+    ContextualLogger.info(f"Capturing visual snapshot for masking: {name}", context)
+    context.driver.save_screenshot(current_path)
+
+    # 2. Identify regions to mask
+    page_name = getattr(context, 'current_page', None)
+    mask_regions = []
+    
+    for row in context.table:
+        element_name = row[0]
+        try:
+            element = get_element_from_page_object(context, element_name, page_name)
+            location = element._find_element().location
+            size = element._find_element().size
+            mask_regions.append({
+                'x': location['x'],
+                'y': location['y'],
+                'width': size['width'],
+                'height': size['height']
+            })
+        except Exception as e:
+            ContextualLogger.warning(f"Could not locate element '{element_name}' for masking: {e}", context)
+
+    # 3. Apply masking
+    VisualHandler.apply_masking(current_path, mask_regions)
+
+    # 4. Compare against baseline (if baseline exists and is not masked, 
+    # it will be masked on next save/seed or must be masked manually once)
+    similarity, is_match = VisualHandler.validate_visual(
+        context, name, current_path, threshold
+    )
+
+    # Handle failure based on configuration
+    visual_config = getattr(context, 'visual_config', {})
+    if not is_match and visual_config.get('fail', False):
+        raise AssertionError(
+            f"Visual validation failed for '{name}' after masking. "
+            f"Similarity: {similarity:.2f}%. Allowed threshold: {threshold}%."
+        )
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # SECTION 8: MOUSE & KEYBOARD ACTIONS
 # ═══════════════════════════════════════════════════════════════════════════════

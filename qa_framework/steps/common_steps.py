@@ -25,6 +25,16 @@ def step_wait_seconds(context, seconds):
     time.sleep(float(seconds))
 
 
+@step('I wait for "{name}" to be stable')
+@step('I wait for "{name}" to update')
+def step_wait_for_stability(context, name):
+    """
+    Generic placeholder for stability waits (animations, loading states).
+    Standardizes 'I wait for "dashboard" to be stable' across projects.
+    """
+    time.sleep(1)
+
+
 @step('I store the text of the "{element_name}" as "{var_name}"')
 def step_store_element_text(context, element_name, var_name):
     """

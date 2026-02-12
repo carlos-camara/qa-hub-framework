@@ -30,7 +30,7 @@ def step_verify_pdf_pages(context, filename, page_count):
     assert actual_pages >= page_count, f"Expected {page_count}, found {actual_pages}"
 
 @then('I verify the content of the first {count:d} pages of "{filename}" contains "{keyword}"')
-def step_verify_pdf_content(context, count, filename, keyword):
+def step_verify_pdf_content_keyword(context, count, filename, keyword):
     filepath = getattr(context, 'last_downloaded_file', os.path.join(DOWNLOADS_DIR, filename))
     reader = PdfReader(filepath)
     found = False
@@ -40,3 +40,25 @@ def step_verify_pdf_content(context, count, filename, keyword):
             found = True
             break
     assert found, f"Keyword '{keyword}' not found in first {count} pages of {filename}"
+
+@then('I verify the content of the first {page_count:d} pages of "{filename}"')
+def step_verify_pdf_content_non_empty(context, page_count, filename):
+    """Verify that the first N pages of the PDF are not empty."""
+    filepath = getattr(context, 'last_downloaded_file', os.path.join(DOWNLOADS_DIR, filename))
+    
+    # Simple wait for file if not already in context
+    if not os.path.exists(filepath):
+        for _ in range(5):
+            if os.path.exists(filepath):
+                break
+            time.sleep(1)
+            
+    assert os.path.exists(filepath), f"File {filename} not found in {DOWNLOADS_DIR}"
+    
+    reader = PdfReader(filepath)
+    actual_pages = len(reader.pages)
+    assert actual_pages >= page_count, f"PDF has {actual_pages} pages, expected at least {page_count}"
+    
+    for i in range(page_count):
+        page_text = reader.pages[i].extract_text()
+        assert page_text.strip(), f"Page {i+1} of {filename} is empty or could not be read."
