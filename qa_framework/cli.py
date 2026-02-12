@@ -36,6 +36,7 @@ def main():
     run_parser.add_argument("--fail", action="store_true", help="Stop execution on first failure")
     run_parser.add_argument("--no-capture", action="store_true", help="Don't capture stdout (show prints in real-time)")
     run_parser.add_argument("--path", help="Path to feature files", default="features")
+    run_parser.add_argument("--junit-dir", help="Directory for JUnit XML reports", default=None)
     
     args = parser.parse_args()
     
@@ -66,7 +67,11 @@ def execute_run(args):
     if args.no_capture:
         cmd.append("--no-capture")
     
-    # 5. Define variables (Environment, Browser)
+    # 5. JUnit Reports
+    if args.junit_dir:
+        cmd.extend(["--junit", "--junit-directory", args.junit_dir])
+    
+    # 6. Define variables (Environment, Browser)
     # We pass these as user-defined variables using -D
     cmd.extend(["-D", f"env={args.env}"])
     
