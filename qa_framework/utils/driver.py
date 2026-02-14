@@ -258,6 +258,8 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
     if headless:
         options.add_argument("--headless=new")  # Modern headless mode
         options.add_argument(window_size_arg)
+        # Mimic a real browser to avoid anti-bot/mobile layouts
+        options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
     elif not use_custom_size:
         options.add_argument("--start-maximized")
     else:
