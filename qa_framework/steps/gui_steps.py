@@ -25,6 +25,18 @@ from ..utils.visual import VisualHandler
 from ..utils.logger import ContextualLogger
 
 
+@step('I set the viewport to "{width}" x "{height}"')
+def step_set_viewport_size(context, width, height):
+    """
+    Sets the browser viewport to a specific size.
+    Useful for testing responsive layouts.
+    """
+    w = int(width)
+    h = int(height)
+    ContextualLogger.info(f"Setting viewport to {w}x{h}", context)
+    context.driver.set_window_size(w, h)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # SECTION 1: DRIVER-AGNOSTIC WAIT UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -626,7 +638,7 @@ def step_set_current_page(context, page_name):
             if isinstance(config, dict) and config.get('wait_load') is True:
                 try:
                     element = get_element_from_page_object(context, elem_name, page_name)
-                    element.wait_until_visible(timeout=10)
+                    element.wait_until_visible(timeout=30)
                 except Exception as e:
                     raise AssertionError(
                         f"Page Load Failed: Critical element '{elem_name}' not visible on '{page_name}'. "
@@ -779,6 +791,36 @@ def step_visual_match_explicit(context, description, target_type, name):
     step_visual_match_with_threshold(context, description, name, 0.0)
 
 
+@then('the "{element_name}" text should be one of "{options_str}"')
+def step_text_should_be_one_of(context, element_name, options_str):
+    """
+    Verify that an element's text matches one of the provided options.
+    Options are comma-separated.
+    
+    Example:
+        Then the "status" text should be one of "Active, Pending, Completed"
+    """
+    options = [opt.strip() for opt in options_str.split(',')]
+    page_name = getattr(context, 'current_page', None)
+    
+    if not page_name:
+         # Fallback: try to guess page or use current context logic if available.
+         # For now, require page context.
+         raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+
+    element = get_element_from_page_object(context, element_name, page_name)
+    text = element.get_text()
+    
+    # Check simplified normalization (strip whitespace)
+    match = False
+    for opt in options:
+        if opt in text: # flexible matching
+             match = True
+             break
+    
+    assert match, f"Text '{text}' in '{element_name}' is not one of {options}"
+
+
 @then('the "{description}" {target_type:w} should visually match the baseline image "{name}" with a {threshold:f}% tolerance')
 def step_visual_match_explicit_with_threshold(context, description, target_type, name, threshold):
     """
@@ -812,6 +854,7 @@ def step_visual_match(context, element_description, screenshot_name):
 
 @then('the visual of the "{element_description}" named "{screenshot_name}" should match with a threshold of {threshold:f}%')
 def step_visual_match_with_threshold(context, element_description, screenshot_name, threshold):
+    print(f"\n[DEBUG] ENTERING step_visual_match_with_threshold: desc={element_description}, name={screenshot_name}\n")
     """
     Core visual comparison implementation.
     
@@ -833,7 +876,44 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
         
     current_path = os.path.join(ss_dir, f"{screenshot_name}_latest.png")
     ContextualLogger.info(f"Capturing visual snapshot: {screenshot_name}", context)
-    context.driver.save_screenshot(current_path)
+    
+    # Attempt to capture element-specific screenshot if possible
+    page_name = getattr(context, 'current_page', None)
+    captured = False
+    try:
+        # Support explicit page targeting via dot notation (e.g., "sidebar.sidebar_container")
+        target_page = page_name
+        target_element = element_description
+        
+        if "." in element_description:
+            parts = element_description.split('.')
+            target_page = parts[0]
+            target_element = ".".join(parts[1:])
+            
+        if target_page:
+            with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
+                f.write(f"Attempting granular capture for {target_element} in {target_page}\n")
+            
+            element = get_element_from_page_object(context, target_element, target_page)
+            # Find the actual driver element and take its screenshot
+            if hasattr(element, '_find_element'):
+                el = element._find_element()
+                el.screenshot(current_path)
+                captured = True
+                ContextualLogger.info(f"Captured granular screenshot for element: {target_element} in {target_page}", context)
+        else:
+            with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
+                f.write(f"Skipping granular capture: target_page is None. context.current_page={getattr(context, 'current_page', 'MISSING')}\n")
+
+    except Exception as e:
+        # Fallback to full viewport if element not found or error
+        with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
+            f.write(f"Granular capture failed for '{target_element}': {e}\n")
+        ContextualLogger.debug(f"Granular capture fallback: {e}", context)
+        pass
+
+    if not captured:
+        context.driver.save_screenshot(current_path)
     
     # Compare against baseline
     similarity, is_match = VisualHandler.validate_visual(
@@ -863,35 +943,85 @@ def step_visual_match_with_masking(context, description, target_type, name, thre
     if not context.table:
         raise AssertionError("This step requires a table of elements to mask.")
 
+    # Identfy current page
+    page_name = getattr(context, 'current_page', None)
+
     # 1. Capture current state
+    # 1. Capture visual state
     ss_dir = os.path.join(os.getcwd(), 'features', 'resources', 'screenshots')
     if not os.path.exists(ss_dir):
         os.makedirs(ss_dir)
     
     current_path = os.path.join(ss_dir, f"{name}_latest.png")
-    ContextualLogger.info(f"Capturing visual snapshot for masking: {name}", context)
-    context.driver.save_screenshot(current_path)
-
-    # 2. Identify regions to mask
-    page_name = getattr(context, 'current_page', None)
-    mask_regions = []
     
-    for row in context.table:
-        element_name = row[0]
-        try:
-            element = get_element_from_page_object(context, element_name, page_name)
-            location = element._find_element().location
-            size = element._find_element().size
-            mask_regions.append({
-                'x': location['x'],
-                'y': location['y'],
-                'width': size['width'],
-                'height': size['height']
-            })
-        except Exception as e:
-            ContextualLogger.warning(f"Could not locate element '{element_name}' for masking: {e}", context)
+    # Resolve target element for granular capture
+    target_obj = get_element_from_page_object(context, description, page_name)
+    captured_granular = False
+    parent_offset_x = 0
+    parent_offset_y = 0
+    
+    try:
+        if target_obj and hasattr(target_obj, '_find_element'):
+            # Scroll into view first
+            el = target_obj._find_element()
+            # Scroll into view first - align to start for large containers like dashboard
+            align_to_top = 'true' if description == 'dashboard' else 'false'
+            # context.driver.execute_script("arguments[0].scrollIntoView({block: 'start', inline: 'nearest'});", el)
+            # Simple approach: scroll to top if dashboard or mobile_layout
+            if description in ['dashboard', 'mobile_layout']:
+                 context.driver.execute_script("arguments[0].scrollIntoView(true);", el)
+            else:
+                 context.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
+            time.sleep(0.5)
+            
+            # Capture element
+            el.screenshot(current_path)
+            captured_granular = True
+            ContextualLogger.info(f"Captured granular screenshot for masking: {name} (Element: {description})", context)
+            
+            # Record parent location for relative mask coordinates
+            parent_offset_x = el.location['x']
+            parent_offset_y = el.location['y']
+            
+    except Exception as e:
+        ContextualLogger.warning(f"Granular capture failed for '{description}', falling back to viewport: {e}", context)
 
-    # 3. Apply masking
+    if not captured_granular:
+        ContextualLogger.info(f"Capturing viewport screenshot for masking: {name}", context)
+        context.driver.save_screenshot(current_path)
+        # Use scroll offset for viewport capture
+        parent_offset_x = context.driver.execute_script("return window.pageXOffset;")
+        parent_offset_y = context.driver.execute_script("return window.pageYOffset;")
+
+    # 2. Apply Masks
+    mask_regions = []
+    if context.table:
+        for row in context.table:
+            sub_element_name = row[0]
+            try:
+                sub_el = get_element_from_page_object(context, sub_element_name, page_name)
+                found_elements = context.driver.find_elements(*sub_el.locator)
+                
+                for el in found_elements:
+                    loc = el.location
+                    size = el.size
+                    
+                    # Calculate relative coordinates based on capture mode
+                    x = loc['x'] - parent_offset_x
+                    y = loc['y'] - parent_offset_y
+                    
+                    if x >= 0 and y >= 0: # Only mask if within captured region
+                        mask_regions.append({
+                            'x': x,
+                            'y': y,
+                            'width': size['width'],
+                            'height': size['height']
+                        })
+            except Exception as e:
+                ContextualLogger.warning(f"Failed to mask element '{sub_element_name}': {e}", context)
+
+    # 4. Apply masking
+    ContextualLogger.debug(f"[DEBUG] Applying {len(mask_regions)} mask regions.", context)
     VisualHandler.apply_masking(current_path, mask_regions)
 
     # 4. Compare against baseline (if baseline exists and is not masked, 

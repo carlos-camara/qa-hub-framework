@@ -53,6 +53,13 @@ class FrameworkHooks:
                     visual_config[option] = resolved_value.lower() == 'true'
                 else:
                     visual_config[option] = resolved_value
+        
+        # Override from Environment Variables
+        if os.environ.get('VISUALTESTS_SAVE', '').lower() == 'true':
+            visual_config['save'] = True
+        if os.environ.get('VISUALTESTS_ENABLED', '').lower() == 'false':
+            visual_config['enabled'] = False
+            
         context.visual_config = visual_config
         
         # 6. Metadata
@@ -82,6 +89,22 @@ class FrameworkHooks:
         if should_init:
             headless = os.getenv("HEADLESS", "true").lower() == "true"
             context.driver = get_driver(headless=headless)
+
+        # Configure headless downloads for Chrome if using Selenium/Chrome
+        # This ensures downloads work even in CI/Headless environments
+        if hasattr(context, 'driver') and context.driver.name == 'chrome':
+             downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+             if not os.path.exists(downloads_dir):
+                 os.makedirs(downloads_dir)
+                 
+             try:
+                 context.driver.execute_cdp_cmd('Page.setDownloadBehavior', {
+                     'behavior': 'allow',
+                     'downloadPath': downloads_dir
+                 })
+             except Exception:
+                 # Driver might not support CDP or is already configured
+                 pass
 
     @staticmethod
     def after_scenario(context, scenario, step_failure_dir=None):
