@@ -25,7 +25,9 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from selenium.webdriver.edge.service import Service as EdgeService
-from .driver_manager import DriverManager
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from ..core.config_manager import ConfigManager
 
 def get_downloads_dir():
@@ -112,6 +114,14 @@ def get_driver(headless=True, no_sandbox=True, window_size="1365,768"):
          else:
              headless = bool(config_headless)
 
+    # Check no_sandbox param (Driver.no_sandbox overrides arg if present)
+    config_no_sandbox = config.get('Driver.no_sandbox')
+    if config_no_sandbox is not None:
+         if isinstance(config_no_sandbox, str):
+             no_sandbox = config_no_sandbox.lower() == 'true'
+         else:
+             no_sandbox = bool(config_no_sandbox)
+
     width = config.get('Driver.window_width')
     height = config.get('Driver.window_height')
 
@@ -162,7 +172,7 @@ def _create_firefox_driver(config, headless, width, height, window_size, use_cus
     # config is now ConfigManager instance
     path = config.get('Driver.gecko_driver_path')
     if not path:
-        path = DriverManager.ensure_driver("firefox")
+        path = GeckoDriverManager().install()
         
     options = FirefoxOptions()
     if headless:
@@ -200,7 +210,7 @@ def _create_edge_driver(config, headless, window_size_arg, use_custom_size):
     # config is now ConfigManager instance
     path = config.get('Driver.edge_driver_path')
     if not path:
-        path = DriverManager.ensure_driver("edge")
+        path = EdgeChromiumDriverManager().install()
         
     options = EdgeOptions()
     if headless:
@@ -240,10 +250,9 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
     """
     # config is now ConfigManager instance
     path = config.get('Driver.chrome_driver_path')
-    version = config.get('Driver.version')
-    
     if not path:
-        path = DriverManager.ensure_driver("chrome", version=version)
+        # Force webdriver-manager to resolve the correct version for the installed Chrome
+        path = ChromeDriverManager().install()
         
     options = ChromeOptions()
     if headless:
