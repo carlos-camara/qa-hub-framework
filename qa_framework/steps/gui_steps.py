@@ -1111,6 +1111,45 @@ def step_press_key(context, key_name):
     actions.send_keys(key_map[key_name]).perform()
 
 
+@when('I press the "{key_name}" key on the element "{element_name}"')
+def step_press_key_on_current_element(context, key_name, element_name):
+    """
+    Press a specific keyboard key on an element using current page context.
+    """
+    page_name = getattr(context, 'current_page', None)
+    if not page_name:
+        raise AttributeError("No current page set. Use 'Then the \"page\" page is displayed' first.")
+    step_press_key_on_page_element(context, key_name, element_name, page_name)
+
+
+@when('I press the "{key_name}" key on element "{element_name}" in page "{page_name}"')
+def step_press_key_on_page_element(context, key_name, element_name, page_name):
+    """
+    Press a specific keyboard key on an element in a specific page.
+    """
+    from selenium.webdriver.common.keys import Keys
+    key_map = {
+        "Enter": Keys.ENTER,
+        "Return": Keys.RETURN,
+        "Tab": Keys.TAB,
+        "Escape": Keys.ESCAPE,
+        "Backspace": Keys.BACKSPACE,
+        "Delete": Keys.DELETE
+    }
+    
+    key_to_send = key_map.get(key_name.title())
+    if not key_to_send:
+        # Try upper case for full compatibility with existing local steps
+        key_to_send = key_map.get(key_name.upper())
+        
+    if not key_to_send:
+         raise ValueError(f"Key '{key_name}' not supported. Supported: {list(key_map.keys())}")
+
+    element = get_element_from_page_object(context, element_name, page_name)
+    selenium_element = element._find_element()
+    selenium_element.send_keys(key_to_send)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # SECTION 9: WINDOW & FRAME MANAGEMENT
 # ═══════════════════════════════════════════════════════════════════════════════

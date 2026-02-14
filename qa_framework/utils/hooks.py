@@ -72,6 +72,19 @@ class FrameworkHooks:
         Handles driver initialization per scenario basis, respecting reuse settings.
         """
         driver_config = getattr(context, 'driver_config', {})
+        
+        # Determine if this is an API test (should skip driver init)
+        tags = list(scenario.tags) + list(scenario.feature.tags)
+        is_api = any(tag.lower() == 'api' for tag in tags)
+        
+        # Initialize context.dataset for all tests to prevent attribute errors
+        if not hasattr(context, 'dataset'):
+            context.dataset = {}
+
+        if is_api:
+            # We skip driver initialization for API tests
+            return
+
         reuse_session = driver_config.get('reuse_driver_session', False)
         reuse_feature = driver_config.get('reuse_driver', False) or 'reuse_driver' in scenario.feature.tags
         
@@ -92,7 +105,7 @@ class FrameworkHooks:
 
         # Configure headless downloads for Chrome if using Selenium/Chrome
         # This ensures downloads work even in CI/Headless environments
-        if hasattr(context, 'driver') and context.driver.name == 'chrome':
+        if hasattr(context, 'driver') and context.driver and context.driver.name == 'chrome':
              downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
              if not os.path.exists(downloads_dir):
                  os.makedirs(downloads_dir)
