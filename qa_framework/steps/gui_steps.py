@@ -891,9 +891,6 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
             target_element = ".".join(parts[1:])
             
         if target_page:
-            with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
-                f.write(f"Attempting granular capture for {target_element} in {target_page}\n")
-            
             element = get_element_from_page_object(context, target_element, target_page)
             # Find the actual driver element and take its screenshot
             if hasattr(element, '_find_element'):
@@ -902,14 +899,11 @@ def step_visual_match_with_threshold(context, element_description, screenshot_na
                 captured = True
                 ContextualLogger.info(f"Captured granular screenshot for element: {target_element} in {target_page}", context)
         else:
-            with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
-                f.write(f"Skipping granular capture: target_page is None. context.current_page={getattr(context, 'current_page', 'MISSING')}\n")
+            ContextualLogger.debug(f"Skipping granular capture: target_page is None", context)
 
     except Exception as e:
         # Fallback to full viewport if element not found or error
-        with open('C:/Users/Carlos/Desktop/github/dashboard/DEBUG_MASK.txt', 'a') as f:
-            f.write(f"Granular capture failed for '{target_element}': {e}\n")
-        ContextualLogger.debug(f"Granular capture fallback: {e}", context)
+        ContextualLogger.debug(f"Granular capture failed for '{target_element}': {e}", context)
         pass
 
     if not captured:
