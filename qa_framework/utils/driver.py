@@ -298,7 +298,7 @@ def _create_chrome_driver(config, headless, no_sandbox, window_size_arg, use_cus
                 'downloadPath': downloads_dir
             })
         except Exception:
-            pass
+            pass  # nosec B110 - Optional feature, ignore if failed
     
     return driver
 

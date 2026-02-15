@@ -117,7 +117,7 @@ class FrameworkHooks:
                  })
              except Exception:
                  # Driver might not support CDP or is already configured
-                 pass
+                 pass  # nosec B110
 
     @staticmethod
     def after_scenario(context, scenario, step_failure_dir=None):
