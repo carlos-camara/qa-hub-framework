@@ -137,6 +137,50 @@ def wait_for_title(driver, title, timeout=10):
         WebDriverWait(driver, timeout).until(EC.title_is(title))
 
 
+def wait_for_text_visible(driver, text, timeout=20):
+    """
+    Wait until the specified text is present in the page body.
+
+    Supports both Selenium and Playwright. Uses whitespace normalization
+    to handle dynamic formatting variations.
+
+    Args:
+        driver: WebDriver instance or PlaywrightWrapper
+        text: Expected text to wait for
+        timeout: Maximum seconds to wait (default: 20)
+    """
+    normalized_expected = " ".join(text.lower().split())
+
+    if hasattr(driver, 'page'):  # Playwright
+        # Use selector-based wait for efficiency in Playwright
+        try:
+            driver.page.wait_for_selector(f"text='{text}'", state="visible", timeout=timeout*1000)
+        except Exception:
+            # Fallback to body content check if selector-based wait fails (normalization)
+            start = time.time()
+            while time.time() - start < timeout:
+                body_text = driver.page.inner_text("body")
+                if normalized_expected in " ".join(body_text.lower().split()):
+                    return True
+                time.sleep(0.5)
+            raise TimeoutException(f"Timed out waiting for text '{text}'")
+    else:  # Selenium
+        def check_text(d):
+            try:
+                body_text = d.find_element(By.TAG_NAME, "body").text
+                normalized_body = " ".join(body_text.lower().split())
+                return normalized_expected in normalized_body
+            except Exception:
+                return False
+
+        try:
+            WebDriverWait(driver, timeout).until(check_text)
+        except TimeoutException:
+            current_url = driver.current_url
+            ContextualLogger.error(f"Text Wait Failed. URL: {current_url}")
+            raise TimeoutException(f"Timed out waiting for text '{text}' on page {current_url}")
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # SECTION 2: TOKEN RESOLUTION UTILITIES
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -269,22 +313,23 @@ def step_click_button_by_text(context, button_text):
     element.click()
 
 
-@then('I should see the text "{text}"')
-def step_verify_text_present(context, text):
-    """
-    Verify that specific text is present anywhere on the page.
-    
-    Uses case-insensitive, whitespace-normalized matching for robustness.
-    
-    Example:
-        Then I should see the text "Welcome back, John!"
-    """
-    resolved_text = resolve_i18n(context, text)
-    body_text = context.driver.find_element(By.TAG_NAME, "body").text
-    normalized_body = " ".join(body_text.lower().split())
-    normalized_expected = " ".join(resolved_text.lower().split())
     assert normalized_expected in normalized_body, \
         f"Text '{resolved_text}' not found (case-insensitive normalized search)"
+
+
+@step('I wait until the text "{text}" is visible')
+def step_wait_until_text_visible(context, text):
+    """
+    Wait until specific text is present anywhere on the page.
+
+    Useful for ensuring asynchronous content has loaded before continuing.
+    Supports I18n tokens and whitespace-normalized matching.
+
+    Example:
+        Then I wait until the text "Success!" is visible
+    """
+    resolved_text = resolve_i18n(context, text)
+    wait_for_text_visible(context.driver, resolved_text)
 
 
 @then('I should see an element with class "{class_name}"')
