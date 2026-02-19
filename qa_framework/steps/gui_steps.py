@@ -312,11 +312,6 @@ def step_click_button_by_text(context, button_text):
     element = context.driver.find_element(*locator)
     element.click()
 
-
-    assert normalized_expected in normalized_body, \
-        f"Text '{resolved_text}' not found (case-insensitive normalized search)"
-
-
 @step('I wait until the text "{text}" is visible')
 def step_wait_until_text_visible(context, text):
     """
@@ -328,8 +323,23 @@ def step_wait_until_text_visible(context, text):
     Example:
         Then I wait until the text "Success!" is visible
     """
-    resolved_text = resolve_i18n(context, text)
+    resolved_text = resolve_tokens(context, text)
     wait_for_text_visible(context.driver, resolved_text)
+
+
+@step('I should see the text "{text}"')
+def step_should_see_text(context, text):
+    """
+    Verify that the specified text is visible on the page.
+
+    Supports I18n tokens and whitespace-normalized matching.
+    Includes a default 10s wait for resilient assertions.
+
+    Example:
+        Then I should see the text "Logged in successfully"
+    """
+    resolved_text = resolve_tokens(context, text)
+    wait_for_text_visible(context.driver, resolved_text, timeout=10)
 
 
 @then('I should see an element with class "{class_name}"')
