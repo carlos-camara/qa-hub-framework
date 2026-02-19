@@ -37,6 +37,7 @@ def main():
     run_parser.add_argument("--no-capture", action="store_true", help="Don't capture stdout (show prints in real-time)")
     run_parser.add_argument("--path", help="Path to feature files", default="features")
     run_parser.add_argument("--junit-dir", help="Directory for JUnit XML reports", default=None)
+    run_parser.add_argument("--project", help="Project name for standardized reporting", default=None)
     
     args = parser.parse_args()
     
@@ -67,9 +68,25 @@ def execute_run(args):
     if args.no_capture:
         cmd.append("--no-capture")
     
-    # 5. JUnit Reports
-    if args.junit_dir:
-        cmd.extend(["--junit", "--junit-directory", args.junit_dir])
+    # 5. JUnit Reports & Standardization
+    junit_dir = args.junit_dir
+    
+    if args.project:
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        standard_path = os.path.join("reports", "test_run", f"{args.project}_{timestamp}")
+        
+        # If junit_dir was also provided, we join them or override? 
+        # Requirement: Standardize to reports/test_run/<project>_<timestamp>
+        junit_dir = standard_path
+        ContextualLogger.info(f"Standardized reporting enabled for project: {Colors.BOLD}{args.project}{Colors.END}")
+
+    if junit_dir:
+        # Ensure directory exists
+        if not os.path.exists(junit_dir):
+            os.makedirs(junit_dir)
+        cmd.extend(["--junit", "--junit-directory", junit_dir])
+        ContextualLogger.debug(f"JUnit results will be saved to: {junit_dir}")
     
     # 6. Define variables (Environment, Browser)
     # We pass these as user-defined variables using -D
