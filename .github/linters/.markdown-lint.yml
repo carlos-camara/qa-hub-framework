@@ -8,3 +8,18 @@ MD013: false
 
 # MD033 (Inline HTML) - Required for centering headers
 MD033: false
+
+# MD022 (Blanks around headings) - We often use compact headers
+MD022: false
+
+# MD032 (Blanks around lists) - We prefer compact lists in many docs
+MD032: false
+
+# MD031 (Blanks around fences) - Compact layouts
+MD031: false
+
+# MD004 (Unordered list style) - Allow both asterisks and dashes
+MD004: false
+
+# MD007 (Unordered list indentation) - Relax indentation requirements
+MD007: false
