@@ -9,7 +9,8 @@ extra_javascript:
 
 theme:
   name: material
-  logo: material/robot-industrial
+  icon:
+    logo: material/robot
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
