@@ -1,4 +1,9 @@
-# Element Types
+<div align="center">
+  <h1>🧩 Semantic Element Types</h1>
+  <p><i>Typed wrappers for high-fidelity Selenium and Playwright interactions.</i></p>
+</div>
+
+---
 
 The QA Hub Framework provides a rich library of typed elements that encapsulate Selenium/Playwright interactions into semantic methods. This "Element Wrapper" pattern improves test readability and maintainability.
 

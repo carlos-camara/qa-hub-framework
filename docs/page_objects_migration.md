@@ -1,7 +1,14 @@
-# Migration Example: test_runs.yaml
-# This shows how to migrate from old format to new typed element format
+<div align="center">
+  <h1>🚀 POM Migration Guide</h1>
+  <p><i>Transitioning to the high-performance, typed element YAML format.</i></p>
+</div>
 
-## OLD FORMAT (still supported for backward compatibility)
+---
+
+## Evolution Overview
+This guide covers the migration from basic locator structures to the robust, typed element framework.
+
+## OLD FORMAT (Legacy Support)
 ```yaml
 test_runs:
   title:

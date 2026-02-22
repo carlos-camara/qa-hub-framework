@@ -1,4 +1,9 @@
-# 🖱️ GUI Testing
+<div align="center">
+  <h1>🖱️ GUI Testing Guide</h1>
+  <p><i>Advanced browser automation via unified Selenium and Playwright engines.</i></p>
+</div>
+
+---
 
 The framework provides powerful Gherkin steps for browser automation, supporting both Selenium (standard) and Playwright (via wrapper) through a unified API.
 

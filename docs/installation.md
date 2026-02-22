@@ -1,4 +1,9 @@
-# 🛠️ Installation & Setup
+<div align="center">
+  <h1>🛠️ Installation & Setup</h1>
+  <p><i>Standardized deployment and integration workflows for Python environments.</i></p>
+</div>
+
+---
 
 Setting up the **QA Hub Framework** in your project is a straightforward process. The framework is designed to be easily integrated into any Python-based test automation project (specifically those using Behave).
 
@@ -23,10 +28,6 @@ Add the following line to your project's `requirements.txt`:
 -e git+https://github.com/carlos-camara/qa-hub-framework.git#egg=qa-automation-framework
 ```
 Then run:
-```bash
-pip install -r requirements.txt
-```
-
 ```bash
 pip install -r requirements.txt
 ```

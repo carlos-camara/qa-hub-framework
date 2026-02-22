@@ -1,4 +1,9 @@
-# Contributing to QA Hub Framework
+<div align="center">
+  <h1>🤝 Contributing to QA Hub Framework</h1>
+  <p><i>Shaping the future of automated technical validation.</i></p>
+</div>
+
+---
 
 First off, thank you for considering contributing to the QA Hub Framework! It's people like you that make it a great tool for the community. 🎉
 

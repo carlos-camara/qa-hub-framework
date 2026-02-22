@@ -1,8 +1,11 @@
-# 🚀 QA Hub Framework
-
 <div align="center">
-  <h3>The Precision Engineering Core for Automated Quality Assurance</h3>
-  <p><i>A premium, ultra-professional BDD framework bridging high-scale technical validation and surgical-grade reporting.</i></p>
+  <h1>🚀 QA Hub Framework</h1>
+  <p><i>The Precision Engineering Core for Automated Quality Assurance.<br>A premium, ultra-professional BDD framework bridging high-scale technical validation and surgical-grade reporting.</i></p>
+
+  [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)](https://python.org)
+  [![Selenium](https://img.shields.io/badge/Selenium-WebDriver-green.svg?logo=selenium&logoColor=white)](https://selenium.dev)
+  [![Playwright](https://img.shields.io/badge/Playwright-Supported-2EAD33.svg?logo=playwright&logoColor=white)](https://playwright.dev)
+  [![License](https://img.shields.io/badge/License-MIT-purple.svg)](https://github.com/carlos-camara/qa-hub-framework/blob/main/LICENSE)
 </div>
 
 ---
@@ -16,7 +19,7 @@
 - 🎭 **Dual-Driver Engine**: Native support for both **Selenium** and **Playwright**, switchable via configuration.
 - 🎨 **Visual Regression Engine**: RMS-based image comparison with automated baseline management.
 - ⚙️ **Surgical Lifecycle Management**: Advanced driver reuse logic to optimize execution speed.
-- 🧪 **CI/CD Ready**: Seamless integration with GitHub Actions and detailed audit logs.
+- 🧪 **CI/CD Orchestration**: Seamless integration with GitHub Actions and detailed audit logs.
 
 ---
 

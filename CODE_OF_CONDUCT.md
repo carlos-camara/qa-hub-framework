@@ -1,4 +1,9 @@
-# Contributor Covenant Code of Conduct
+<div align="center">
+  <h1>🤝 Contributor Covenant Code of Conduct</h1>
+  <p><i>Our pledge to maintain an open, welcoming, diverse, inclusive, and healthy community.</i></p>
+</div>
+
+---
 
 ## Our Pledge
 

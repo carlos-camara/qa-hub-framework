@@ -131,11 +131,21 @@ class FrameworkHooks:
         
         failed = scenario.status == "failed"
         
-        # Capture screenshots on failure if dir provided
-        if failed and step_failure_dir:
-            # Note: Step failures are usually handled in after_step, 
-            # but we can do a final sanity check here.
-            pass
+        # [NEW] Jira Reporting Logic
+        jira_tags = [tag.split(':')[1] for tag in scenario.tags if tag.lower().startswith('jira:')]
+        if jira_tags:
+            from .jira import JiraConnector
+            jira = JiraConnector()
+            if jira.is_configured():
+                status_icon = "❌ FAILED" if failed else "✅ PASSED"
+                duration = f"{scenario.duration:.2f}s"
+                comment = f"Sentinel Automated Test: {status_icon}\nScenario: {scenario.name}\nDuration: {duration}\nTimestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                
+                for issue_key in jira_tags:
+                    jira.add_comment(issue_key, comment)
+                    if failed and hasattr(context, 'screenshots') and context.screenshots:
+                        # Upload the last screenshot if it exists
+                        jira.upload_attachment(issue_key, context.screenshots[-1])
 
         # Decide if we should close the driver now
         # If we failed and restart_on_failure is true, we always close it to ensure fresh start

@@ -1,4 +1,9 @@
-# 🌐 API Testing
+<div align="center">
+  <h1>🌐 API Testing Guide</h1>
+  <p><i>High-fidelity RESTful validation and dynamic data orchestration.</i></p>
+</div>
+
+---
 
 The framework provides a robust set of Gherkin steps for testing RESTful APIs, built on top of the `requests` library with a focus on high-fidelity assertions and dynamic data.
 

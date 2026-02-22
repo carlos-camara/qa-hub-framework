@@ -1,4 +1,9 @@
-# 🛡️ Security Sanity Checks
+<div align="center">
+  <h1>🛡️ Security Sanity Checks</h1>
+  <p><i>High-fidelity posture validation for API metadata and session integrity.</i></p>
+</div>
+
+---
 
 The framework includes dedicated steps to verify basic security best practices in your API responses. These checks help ensure that your application doesn't leak sensitive information and follows industry-standard security header configurations.
 

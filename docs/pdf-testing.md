@@ -1,4 +1,9 @@
-# 📄 PDF Testing
+<div align="center">
+  <h1>📄 Intelligent PDF Audit</h1>
+  <p><i>Automated integrity and content validation for mission-critical documents.</i></p>
+</div>
+
+---
 
 Specialized testing for generated reports and downloaded documents. The framework includes steps to verify the integrity and content of PDF files.
 

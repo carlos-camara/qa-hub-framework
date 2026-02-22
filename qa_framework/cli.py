@@ -73,11 +73,10 @@ def execute_run(args):
     
     if args.project:
         from datetime import datetime
+        import json
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         standard_path = os.path.join("reports", "test_run", f"{args.project}_{timestamp}")
         
-        # If junit_dir was also provided, we join them or override? 
-        # Requirement: Standardize to reports/test_run/<project>_<timestamp>
         junit_dir = standard_path
         ContextualLogger.info(f"Standardized reporting enabled for project: {Colors.BOLD}{args.project}{Colors.END}")
 
@@ -85,6 +84,22 @@ def execute_run(args):
         # Ensure directory exists
         if not os.path.exists(junit_dir):
             os.makedirs(junit_dir)
+        
+        # [NEW] Generate run_meta.json for dashboard intelligence
+        if args.project:
+            meta_path = os.path.join(junit_dir, "run_meta.json")
+            try:
+                with open(meta_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        "run_info": {
+                            "project": args.project,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    }, f, indent=2)
+                ContextualLogger.debug(f"Generated run_meta.json at: {meta_path}")
+            except Exception as e:
+                ContextualLogger.warning(f"Could not generate run_meta.json: {str(e)}")
+
         cmd.extend(["--junit", "--junit-directory", junit_dir])
         ContextualLogger.debug(f"JUnit results will be saved to: {junit_dir}")
     

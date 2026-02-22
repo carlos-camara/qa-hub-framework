@@ -1,4 +1,9 @@
-# Testing the Framework
+<div align="center">
+  <h1>🧪 Framework Self-Testing</h1>
+  <p><i>Mission-critical stability through automated unit validation.</i></p>
+</div>
+
+---
 
 The QA Hub Framework is built with a "Test-First" mindset. We maintain a comprehensive suite of unit tests to ensure stability across version updates.
 

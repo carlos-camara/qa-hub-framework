@@ -1,4 +1,9 @@
-# 🚀 QA Hub Framework
+<div align="center">
+  <h1>🚀 QA Hub Framework</h1>
+  <p><i>The high-performance core for modular, YAML-driven automation ecosystems.</i></p>
+</div>
+
+---
 
 Build ultra-premium, ultra-stable automation suites with Python, Behave, and a YAML-driven engine.
 

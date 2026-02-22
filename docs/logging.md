@@ -1,4 +1,9 @@
-# 📝 Professional Logging
+<div align="center">
+  <h1>📝 Professional Logging</h1>
+  <p><i>High-fidelity audit trails and contextual debugging for global execution.</i></p>
+</div>
+
+---
 
 The framework features a **ContextualLogger** designed for clear audit trails and high-fidelity debugging in both local and CI/CD environments.
 
@@ -7,7 +12,7 @@ The framework features a **ContextualLogger** designed for clear audit trails an
 Unlike standard `print` statements, the `ContextualLogger`:
 - **Automatically detects context**: Extracts Feature and Scenario names from Behave.
 - **Color-coded output**: Standardized colors for different severity levels.
-- **Audit-ready**: Prepend setiap log with a high-precision timestamp.
+- **Audit-ready**: Prepend every log with a high-precision timestamp.
 - **Terminal Friendly**: Uses ANSI codes for beautiful terminal formatting.
 
 ## 📊 Log Levels

@@ -1,4 +1,9 @@
-# Security Policy
+<div align="center">
+  <h1>🛡️ Security Policy</h1>
+  <p><i>Mission-critical vulnerability management and support matrix.</i></p>
+</div>
+
+---
 
 ## Supported Versions
 

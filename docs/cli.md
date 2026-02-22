@@ -1,4 +1,9 @@
-# 🛠️ QA Hub CLI (`qa-hub`)
+<div align="center">
+  <h1>🛠️ Command Line Interface</h1>
+  <p><i>Empowering surgical test execution via the `qa-hub` binary.</i></p>
+</div>
+
+---
 
 The framework provides a dedicated Command Line Interface to simplify test execution and environment management.
 

@@ -1,4 +1,9 @@
-# 🏗️ Framework Architecture
+<div align="center">
+  <h1>🏗️ Framework Architecture</h1>
+  <p><i>Structural blueprints for high-scale technical validation.</i></p>
+</div>
+
+---
 
 This document provides a deep dive into the internal structure and design decisions of the **QA Hub Framework**.
 

@@ -1,4 +1,9 @@
-# 📔 Gherkin Steps Library
+<div align="center">
+  <h1>📔 Gherkin Steps Library</h1>
+  <p><i>The foundational lexicon for surgical technical validation.</i></p>
+</div>
+
+---
 
 This library documents the **reusable common steps** provided by the framework. These steps are organized by component to help you build comprehensive test suites.
 

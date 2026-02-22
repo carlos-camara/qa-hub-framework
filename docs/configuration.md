@@ -1,4 +1,9 @@
-# 🛠️ Configuration Manager Guide
+<div align="center">
+  <h1>🛠️ Configuration Management</h1>
+  <p><i>Centralized orchestration for multi-environment testing environments.</i></p>
+</div>
+
+---
 
 The **QA Hub Framework** employs a robust, centralized configuration system designed to handle complex testing environments with ease. This guide explains how it works, how to use it, and how to implement it in your projects.
 

@@ -1,4 +1,9 @@
-# 🏗️ Architecture Overview
+<div align="center">
+  <h1>🏗️ Architecture Deep-Dive</h1>
+  <p><i>Navigating the modular engine of the QA Hub Ecosystem.</i></p>
+</div>
+
+---
 
 The **QA Hub Framework** is designed with modularity and reusability at its core. It separates low-level automation logic from high-level test specifications.
 
