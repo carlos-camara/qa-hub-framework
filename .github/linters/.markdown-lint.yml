@@ -1,0 +1,10 @@
+---
+# .markdown-lint.yml
+# Suppress MD041 - We use <div align="center"> for premium aesthetic
+MD041: false
+
+# Suppress MD013 - Line length is handled by other tools or ignored
+MD013: false
+
+# MD033 (Inline HTML) - Required for centering headers
+MD033: false
