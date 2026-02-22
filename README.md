@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="docs/assets/banner.png" alt="QA Hub Framework Banner" width="100%">
   <h1>🚀 QA Hub Framework</h1>
   <p><i>The Precision Engineering Core for Automated Quality Assurance.<br>A premium, ultra-professional BDD framework bridging high-scale technical validation and surgical-grade reporting.</i></p>
 
