@@ -1,4 +1,4 @@
----
+﻿---
 "Type: Core":
   - changed-files:
       - any-glob-to-any-file: "qa_framework/**/*"
