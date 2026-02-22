@@ -1,9 +1,18 @@
+---
 "Type: Core":
-  - qa_framework/**/*
+  - changed-files:
+      - any-glob-to-any-file: "qa_framework/**/*"
+
 "Type: Documentation":
-  - docs/**/*
-  - "*.md"
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**/*"
+          - "*.md"
+
 "Type: CI/CD":
-  - .github/workflows/**/*
+  - changed-files:
+      - any-glob-to-any-file: ".github/workflows/**/*"
+
 "Type: Tests":
-  - tests/**/*
+  - changed-files:
+      - any-glob-to-any-file: "tests/**/*"
