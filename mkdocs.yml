@@ -59,25 +59,25 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Core Library:
-    - Element Types: elements.md
-    - Utility Handlers: utilities.md
-    - Logging: logging.md
+      - Element Types: elements.md
+      - Utility Handlers: utilities.md
+      - Logging: logging.md
   - Command Line:
-    - CLI Guide: cli.md
-    - Configuration: configuration.md
+      - CLI Guide: cli.md
+      - Configuration: configuration.md
   - Gherkin Steps:
-    - API Testing: api-testing.md
-    - GUI Testing: gui-testing.md
-    - PDF Testing: pdf-testing.md
-    - Step Library: steps.md
+      - API Testing: api-testing.md
+      - GUI Testing: gui-testing.md
+      - PDF Testing: pdf-testing.md
+      - Step Library: steps.md
   - Advanced:
-    - Security Checks: security.md
-    - POM Migration: page_objects_migration.md
+      - Security Checks: security.md
+      - POM Migration: page_objects_migration.md
   - Architecture:
-    - Deep-Dive: architecture.md
-    - Technical Blueprint: architecture_root.md
+      - Deep-Dive: architecture.md
+      - Technical Blueprint: architecture_root.md
   - Community:
-    - Contributing: contributing.md
-    - Code of Conduct: code_of_conduct.md
-    - Security Policy: security_policy.md
+      - Contributing: contributing.md
+      - Code of Conduct: code_of_conduct.md
+      - Security Policy: security_policy.md
   - Internal Testing: testing-framework.md
