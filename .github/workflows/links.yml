@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Link Checker
-        uses: carlos-camara/qa-hub-actions/link-checker@main
+        uses: carlos-camara/qa-hub-actions/link-checker@docs/premium-action-readmes
