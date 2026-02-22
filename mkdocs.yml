@@ -9,6 +9,7 @@ extra_javascript:
 
 theme:
   name: material
+  logo: material/robot-industrial
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -28,11 +29,14 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.tracking
+    - navigation.indexes
     - search.suggest
     - search.highlight
     - search.share
     - content.code.copy
     - content.code.annotate
+    - content.tooltips
 
 markdown_extensions:
   - admonition
@@ -57,9 +61,23 @@ nav:
   - Core Library:
     - Element Types: elements.md
     - Utility Handlers: utilities.md
+    - Logging: logging.md
+  - Command Line:
+    - CLI Guide: cli.md
+    - Configuration: configuration.md
   - Gherkin Steps:
     - API Testing: api-testing.md
     - GUI Testing: gui-testing.md
     - PDF Testing: pdf-testing.md
-  - Architecture: architecture.md
+    - Step Library: steps.md
+  - Advanced:
+    - Security Checks: security.md
+    - POM Migration: page_objects_migration.md
+  - Architecture:
+    - Deep-Dive: architecture.md
+    - Technical Blueprint: architecture_root.md
+  - Community:
+    - Contributing: contributing.md
+    - Code of Conduct: code_of_conduct.md
+    - Security Policy: security_policy.md
   - Internal Testing: testing-framework.md
