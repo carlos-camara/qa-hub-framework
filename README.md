@@ -1,7 +1,8 @@
 <div align="center">
-  <img src="docs/assets/banner.png" alt="QA Hub Framework Banner" width="100%">
   <h1>🚀 QA Hub Framework</h1>
-  <p><i>The Precision Engineering Core for Automated Quality Assurance.<br>A premium, ultra-professional BDD framework bridging high-scale technical validation and surgical-grade reporting.</i></p>
+  <img src="docs/assets/logo.png" alt="QA Hub Framework Logo" width="200">
+  <h3>The Precision Engineering Core for Automated Quality Assurance</h3>
+  <p><i>A premium, ultra-professional BDD engine architected for mission-critical validation.</i></p>
 
   [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?logo=python&logoColor=white)](https://python.org)
   [![Selenium](https://img.shields.io/badge/Selenium-WebDriver-green.svg?logo=selenium&logoColor=white)](https://selenium.dev)
