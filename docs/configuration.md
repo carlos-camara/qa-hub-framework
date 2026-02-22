@@ -15,22 +15,22 @@ The core of this system is the `ConfigManager` singleton class. It automatically
 
 ### Loading Hierarchy (Priority Order)
 
-1.  **Environment Variables** (Highest Priority)
-    -   System-level variables override *all* file-based settings.
-    -   Example: `DRIVER_HEADLESS=false` overrides `headless: true` in YAML.
+1. **Environment Variables** (Highest Priority)
+    - System-level variables override *all* file-based settings.
+    - Example: `DRIVER_HEADLESS=false` overrides `headless: true` in YAML.
 
-2.  **Secrets (`.env`)**
-    -   Loaded from the project root.
-    -   Used for sensitive data (API keys, passwords) that should *never* be committed to Git.
-    -   Overrides YAML files.
+2. **Secrets (`.env`)**
+    - Loaded from the project root.
+    - Used for sensitive data (API keys, passwords) that should *never* be committed to Git.
+    - Overrides YAML files.
 
-3.  **Environment-Specific Config (`features/config/config.{env}.yaml`)**
-    -   Loaded only if the `ENV` environment variable is set (e.g., `ENV=staging`).
-    -   Used to override base settings for specific environments (URL, timeout, accounts).
+3. **Environment-Specific Config (`features/config/config.{env}.yaml`)**
+    - Loaded only if the `ENV` environment variable is set (e.g., `ENV=staging`).
+    - Used to override base settings for specific environments (URL, timeout, accounts).
 
-4.  **Base Config (`features/config/config.yaml`)** (Lowest Priority)
-    -   The default configuration file.
-    -   Contains standard settings applicable to all runs unless rewritten.
+4. **Base Config (`features/config/config.yaml`)** (Lowest Priority)
+    - The default configuration file.
+    - Contains standard settings applicable to all runs unless rewritten.
 
 ---
 
@@ -132,9 +132,9 @@ api_key = config.get("API_KEY")
 
 ### Key Benefits
 
-1.  **No Code Changes**: Switch environments without touching a single line of Python code.
-2.  **Security**: Secrets are kept out of the codebase.
-3.  **Clarity**: Inheritance model (`Base` -> `Env` -> `Var`) makes debugging configuration easy.
-4.  **Scalability**: Add as many environments as you need (`qa`, `uat`, `preprod`).
+1. **No Code Changes**: Switch environments without touching a single line of Python code.
+2. **Security**: Secrets are kept out of the codebase.
+3. **Clarity**: Inheritance model (`Base` -> `Env` -> `Var`) makes debugging configuration easy.
+4. **Scalability**: Add as many environments as you need (`qa`, `uat`, `preprod`).
 
 ---

@@ -15,7 +15,7 @@ Prevents your server from leaking technology versions (e.g., `nginx/1.2.3`) whic
 **Step:**
 `Then the response should not leak server metadata`
 
-*   **Checks:** Fails if `Server` contains a version number or if `X-Powered-By` is present.
+* **Checks**: Fails if `Server` contains a version number or if `X-Powered-By` is present.
 
 ### 2. Mandatory Security Headers
 Ensure that your API provides the necessary headers to protect users from common web attacks.
@@ -23,11 +23,11 @@ Ensure that your API provides the necessary headers to protect users from common
 **Step:**
 `Then the response should contain mandatory security headers`
 
-*   **Verified Headers:**
-    *   `Strict-Transport-Security` (HSTS): Prevents Man-in-the-Middle attacks.
-    *   `X-Content-Type-Options: nosniff`: Prevents MIME-sniffing.
-    *   `X-Frame-Options`: Protects against Clickjacking.
-    *   `Content-Security-Policy` (CSP): Mitigates XSS and data injection.
+* **Verified Headers:**
+  - `Strict-Transport-Security` (HSTS): Prevents Man-in-the-Middle attacks.
+  - `X-Content-Type-Options: nosniff`: Prevents MIME-sniffing.
+  - `X-Frame-Options`: Protects against Clickjacking.
+  - `Content-Security-Policy` (CSP): Mitigates XSS and data injection.
 
 ### 3. Session Cookie Security
 Verify that your session cookies are properly protected for transmission over the network.
@@ -35,10 +35,10 @@ Verify that your session cookies are properly protected for transmission over th
 **Step:**
 `Then all session cookies should be secure`
 
-*   **Verified Flags:**
-    *   `Secure`: Ensures the cookie is only sent over HTTPS.
-    *   `HttpOnly`: Prevents client-side scripts from accessing the cookie.
-    *   `SameSite`: (Lax/Strict) Protects against CSRF attacks.
+* **Verified Flags:**
+  - `Secure`: Ensures the cookie is only sent over HTTPS.
+  - `HttpOnly`: Prevents client-side scripts from accessing the cookie.
+  - `SameSite`: (Lax/Strict) Protects against CSRF attacks.
 
 ## 💡 Example Scenario
 
