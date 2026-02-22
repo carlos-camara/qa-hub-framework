@@ -1,0 +1,86 @@
+---
+name: PR Intelligence
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  intelligence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >
+      github.actor == 'carlos-camara' ||
+      github.actor == 'dependabot[bot]'
+
+    steps:
+      - name: 📝 Validate PR Hygiene
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-hygiene-validator@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          min-description-length: '15'
+
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Auto Label PR
+        uses: carlos-camara/qa-hub-actions/pr-labeler@main
+        with:
+          sync-labels: true
+
+      - name: 📏 Label PR by Size
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-size-labeler@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🤖 Perform Risk Analysis
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-risk-analyzer@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📉 Analyze Coverage & Churn
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-churn-analyzer@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          logic-path: 'qa_framework/|setup.py'
+          test-path: 'tests/'
+          debt-threshold-logic: '100'
+          debt-threshold-tests: '5'
+
+      - name: 👤 Auto Assign PR
+        if: github.actor != 'dependabot[bot]'
+        run: gh pr edit "$PR_NUMBER" --add-assignee "$ASSIGNEE" --repo "$REPO"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          ASSIGNEE: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+
+      - name: 🎯 Auto Milestone PR
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-milestoner@v1.1.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          strategy: "latest_created"
+
+      - name: ✨ Generate PR Summary
+        if: github.actor != 'dependabot[bot]'
+        uses: carlos-camara/qa-hub-actions/pr-summarizer@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          target: "description"
